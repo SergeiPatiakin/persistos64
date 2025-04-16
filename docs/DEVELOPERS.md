@@ -1,3 +1,22 @@
+## Walkthrough: create Persistos64 build container
+```bash
+docker build --platform linux/amd64 -t p64-builder infra
+docker run -d \
+    --name p64-builder-1 \
+    --platform linux/amd64 \
+    --mount type=bind,source=/path/to/persistos64,target=/code \
+    --restart unless-stopped \
+    p64-builder \
+    sleep 100000d
+```
+
+## Walkthrough: build Persistos64
+```bash
+docker exec -it -w /code p64-builder-1 bash
+# inside Docker
+make
+```
+
 ## Walkthrough: get firmware
 Download OVMF.fd from e.g. https://github.com/clearlinux/common/blob/master/OVMF.fd
 
@@ -58,7 +77,7 @@ brew install ninja
 make
 ```
 
-## Walkthrough: run QEMU with GDB server
+## Walkthrough: run Persistos64 in QEMU with GDB server
 
 On host:
 ```bash
@@ -72,7 +91,7 @@ qemu-system-x86_64 -S -s -m 512 -nic user \
 -global i8042.kbd-throttle=on
 ```
 
-## Walkthrough: debug kernel with GDB
+## Walkthrough: debug Persistos64 kernel with GDB
 
 In Docker:
 ```bash
@@ -91,7 +110,7 @@ Alternatively, as a one-liner:
 gdb kernel/build/persistos -ex 'target remote host.docker.internal:1234' -ex c
 ```
 
-## Walkthrough: debug userspace program with GDB
+## Walkthrough: debug Persistos64 userspace program with GDB
 ```bash
 gdb userspace/build/shell -ex 'target remote host.docker.internal:1234' -ex c
 ```
