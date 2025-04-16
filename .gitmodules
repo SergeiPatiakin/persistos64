@@ -1,0 +1,6 @@
+[submodule "limine"]
+	path = kernel/limine
+	url = https://github.com/limine-bootloader/limine
+[submodule "kernel/freestnd-c-hdrs-0bsd"]
+	path = kernel/freestnd-c-hdrs-0bsd
+	url = https://github.com/osdev0/freestnd-c-hdrs-0bsd.git
