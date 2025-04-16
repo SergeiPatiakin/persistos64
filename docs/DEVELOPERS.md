@@ -1,6 +1,5 @@
-## Walkthrough: create QCOW2 drive image
-
-qemu-img create -f qcow2 hd.img 100M
+## Walkthrough: get firmware
+Download OVMF.fd from e.g. https://github.com/clearlinux/common/blob/master/OVMF.fd
 
 ## Walkthrough: prepare a raw drive image on macOS host
 ```bash
@@ -50,7 +49,7 @@ popd
 dd if=em/part.img of=em/hd2.img seek=128 bs=512 conv=notrunc
 ```
 
-## Walkthrough: Compile QEMU
+## Walkthrough: compile QEMU
 ```bash
 pip3 install sphinx
 pip3 install sphinx-rtd-theme
@@ -59,11 +58,11 @@ brew install ninja
 make
 ```
 
-## Walkthrough: debug kernel with GDB
+## Walkthrough: run QEMU with GDB server
 
 On host:
 ```bash
-~/cl/qemu/build/qemu-system-x86_64-unsigned -S -s -m 512 -nic user \
+qemu-system-x86_64 -S -s -m 512 -nic user \
 -boot menu=on \
 -drive if=none,id=usbstick,format=raw,file=kernel/build/persistos.iso \
 -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=usbstick \
@@ -72,6 +71,8 @@ On host:
 -bios em/OVMF.fd --no-shutdown --no-reboot -monitor stdio \
 -global i8042.kbd-throttle=on
 ```
+
+## Walkthrough: debug kernel with GDB
 
 In Docker:
 ```bash
@@ -90,8 +91,7 @@ Alternatively, as a one-liner:
 gdb kernel/build/persistos -ex 'target remote host.docker.internal:1234' -ex c
 ```
 
-Alternatively, to debug a userspace program:
+## Walkthrough: debug userspace program with GDB
 ```bash
 gdb userspace/build/shell -ex 'target remote host.docker.internal:1234' -ex c
 ```
-
