@@ -20,7 +20,6 @@
 #include "lib/cstd.h"
 #include "lib/limine.h"
 #include "lib/list.h"
-#include "lib/spinlock.h"
 #include "mm/kmem.h"
 #include "mm/slab.h"
 #include "mm/userspace.h"
@@ -63,22 +62,6 @@ void kmain(void) {
     };
 
     extract_tar_files(module_request.response->modules[0]->address);
-
-    // asm volatile ("int $0x80" : : "a" (7)); // raise a software interrupt
-
-    // printk("eflags_if: ");
-    // printk(are_interrupts_enabled() ? "true\n" : "false\n");
-
-    // unsigned long flags;
-    // spin_lock_irqsave(NULL, flags);
-
-    // printk("eflags_if: ");
-    // printk(are_interrupts_enabled() ? "true\n" : "false\n");
-
-    // spin_lock_irqrestore(NULL, flags);
-
-    // printk("eflags_if: ");
-    // printk(are_interrupts_enabled() ? "true\n" : "false\n");
 
     add_usermode_gdt_entries();
     add_tss_gdt_entry(&tss);
