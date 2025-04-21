@@ -151,7 +151,7 @@ void exfat_load_dir_inode(struct inode *dir_inode) {
                 // Unknown entry
             }
             x += 0x20;
-            if (x >= dir_content_page + 4096) {
+            if ((void*)x >= dir_content_page + 4096) {
                 // Reached end of page
                 break;
             }
@@ -173,7 +173,7 @@ void exfat_load_dir_inode(struct inode *dir_inode) {
         uint32_t fat_entry;
         vfs_superblock->device_fops->read(
             vfs_superblock->device,
-            &fat_entry,
+            u8p(&fat_entry),
             fat_entry_byte_offset,
             4
         );
@@ -182,13 +182,13 @@ void exfat_load_dir_inode(struct inode *dir_inode) {
             // error("exfat_load_dir_inode: unexpected free cluster in chain\n");
             break;
         } else if (fat_entry == 0x00000001) {
-            printk("exfat_load_dir_inode: unexpected cluster 0x00000001 in chain\n");
+            printk(u8p("exfat_load_dir_inode: unexpected cluster 0x00000001 in chain\n"));
             break;
         } else if (fat_entry == 0xFFFFFFFF) {
             // End of cluster chain
             break;
         } else if (fat_entry == 0xFFFFFFF7) {
-            printk("exfat_load_dir_inode: bad cluster\n");
+            printk(u8p("exfat_load_dir_inode: bad cluster\n"));
             break;
         } else {
             uint32_t new_dir_content_lba = exfat_superblock->cluster_heap_offset +
@@ -197,7 +197,7 @@ void exfat_load_dir_inode(struct inode *dir_inode) {
         }
     }
     
-    finalize:
+    // finalize:
     exfat_inode->load_needed = false;
     kpage_free(dir_content_page, 1);
 }
@@ -226,7 +226,7 @@ void exfat_load_file_inode(struct inode *file_inode) {
         uint32_t fat_entry;
         vfs_superblock->device_fops->read(
             vfs_superblock->device,
-            &fat_entry,
+            u8p(&fat_entry),
             fat_entry_byte_offset,
             4
         );
@@ -235,13 +235,13 @@ void exfat_load_file_inode(struct inode *file_inode) {
             // error("exfat_load_file_inode: unexpected free cluster in chain\n");
             break;
         } else if (fat_entry == 0x00000001) {
-            printk("exfat_load_file_inode: unexpected cluster 0x00000001 in chain\n");
+            printk(u8p("exfat_load_file_inode: unexpected cluster 0x00000001 in chain\n"));
             break;
         } else if (fat_entry == 0xFFFFFFFF) {
             // End of cluster chain
             break;
         } else if (fat_entry == 0xFFFFFFF7) {
-            printk("exfat_load_file_inode: bad cluster\n");
+            printk(u8p("exfat_load_file_inode: bad cluster\n"));
             break;
         } else {
             uint32_t new_file_content_lba = exfat_superblock->cluster_heap_offset +

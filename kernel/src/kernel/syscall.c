@@ -318,7 +318,7 @@ uint64_t handle_syscall(
                 }
                 return filp->fd;
             }
-            panic("Unknown lookup status\n");
+            panic(u8p("Unknown lookup status\n"));
         }
         case SYSCALL_CLOSE: {
             struct file *filp = filp_find(current_task_ts, arg3);
@@ -469,9 +469,9 @@ uint64_t handle_syscall(
             return 0;
         }
         case SYSCALL_MOUNT: {
-            uint8_t *device_path = arg3; // Unsafe
-            uint8_t *mountpoint_path = arg4; // Unsafe
-            uint8_t *fs_type = arg5; // Unsafe
+            uint8_t *device_path = (uint8_t*)arg3; // Unsafe
+            uint8_t *mountpoint_path = (uint8_t*)arg4; // Unsafe
+            uint8_t *fs_type = (uint8_t*)arg5; // Unsafe
             
             struct vfs_lookup_result device_lookup_result;
             vfs_resolve(device_path, &device_lookup_result);

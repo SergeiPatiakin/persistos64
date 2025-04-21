@@ -614,9 +614,9 @@ void nvme_writepage(struct nvme_device *dev, uint32_t lba, void* content_page) {
     // Verify the write command was successful
     uint16_t write_command_status = ((struct nvme_cq_entry*)(dev->iocq))[iocq_head].status_field >> 1;
     if (write_command_status != 0) {
-        printk("Write command error: ");
+        printk(u8p("Write command error: "));
         printk_uint16(write_command_status);
-        printk("\n");
+        printk(u8p("\n"));
         return;
     }
 }
@@ -630,7 +630,7 @@ ssize_t nvme_write(void *dev, uint8_t* buffer, uint64_t offset, size_t length) {
     if (bytes_writeable < 0) {
         bytes_writeable = 0;
     }
-    if (length > bytes_writeable) {
+    if ((int64_t)length > bytes_writeable) {
         length = bytes_writeable;
     }
 
