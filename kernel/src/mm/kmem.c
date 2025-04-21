@@ -63,7 +63,7 @@ void *kpage_alloc(size_t num_pages) {
     size_t i = 0;
     size_t consecutive_free = 0;
     size_t first_page_index = 0;
-    uint8_t state;
+    irq_state state;
     irq_disable(state);
     while (true) {
         if (i >= kmem_total_pages) {

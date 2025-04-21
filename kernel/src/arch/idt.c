@@ -2,6 +2,7 @@
 #include "arch/asm.h"
 #include "arch/idt.h"
 #include "arch/pic.h"
+#include "arch/if.h"
 #include "drivers/keyboard.h"
 #include "drivers/pit.h"
 #include "drivers/nvme.h"
@@ -106,7 +107,11 @@ uint64_t hw_interrupt_handler(
         nvme_handle_interrupt(interrupt_line);
         pic_send_eoi(interrupt_line);
     } else if (interrupt_line == 0x60) { // software int 0x80
-        return handle_syscall(arg1, arg2, arg3, arg4, arg5);
+        irq_state state;
+        irq_enable(state);
+        uint64_t retval = handle_syscall(arg1, arg2, arg3, arg4, arg5);
+        irq_restore(state);
+        return retval;
     } else {
         panic(u8p("Unknown interrupt"));
     }
