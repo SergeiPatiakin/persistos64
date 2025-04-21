@@ -10,11 +10,18 @@ docker run -d \
     sleep 100000d
 ```
 
-## Walkthrough: build Persistos64
+## Walkthrough: build Persistos64 for debug
 ```bash
 docker exec -it -w /code p64-builder-1 bash
 # inside Docker
 make
+```
+
+## Walkthrough: build Persistos64 for release
+```bash
+docker exec -it -w /code p64-builder-1 bash
+# inside Docker
+CFLAGS=-O2 KCFLAGS=-O2 make
 ```
 
 ## Walkthrough: get firmware
