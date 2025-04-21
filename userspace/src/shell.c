@@ -163,7 +163,7 @@ struct pair *parse_word(uint8_t *start, size_t length) {
     pair->next_sibling = NULL;
     
     struct pair *prev_word_fragment = word_fragment;
-    while (word_fragment = parse_word_fragment(cur, max_end - cur)) {
+    while ((word_fragment = parse_word_fragment(cur, max_end - cur))) {
         prev_word_fragment->next_sibling = word_fragment;
         cur = word_fragment->end;
         pair->end = word_fragment->end;
@@ -278,7 +278,7 @@ void expand_word(struct pair *word_pair, uint8_t *out_buffer) {
         if (child_pair->type == PAIR_UNQUOTED_STRING) {
             size_t child_pair_length = child_pair->end - child_pair->start;
             if (exec_buffer_length + child_pair_length >= SCRIPT_BUFFER_LENGTH) {
-                fputs("shell: word is too long\n", stderr);
+                fputs(u8p("shell: word is too long\n"), stderr);
                 exit(2);
             }
             memcpy(out_buffer + exec_buffer_length, child_pair->start, child_pair_length);
@@ -287,13 +287,13 @@ void expand_word(struct pair *word_pair, uint8_t *out_buffer) {
             struct pair *content_pair = child_pair->first_child;
             size_t content_pair_length = content_pair->end - content_pair->start;
             if (exec_buffer_length + content_pair_length >= SCRIPT_BUFFER_LENGTH) {
-                fputs("shell: word is too long\n", stderr);
+                fputs(u8p("shell: word is too long\n"), stderr);
                 exit(2);
             }
             memcpy(out_buffer + exec_buffer_length, content_pair->start, content_pair_length);
             exec_buffer_length += content_pair_length;
         } else {
-            fputs("shell: parser assertion: unexpected pair type\n", stderr);
+            fputs(u8p("shell: parser assertion: unexpected pair type\n"), stderr);
             exit(2);
         }
         out_buffer[exec_buffer_length + 1] = 0;
@@ -318,7 +318,7 @@ uint64_t exec_shell_line(uint8_t *start, size_t length) {
     uint64_t num_redirects = 0;
     for (struct pair *pair = stmt_result->first_child; pair; pair = pair->next_sibling) {
         if (pair->type != PAIR_SIMPLE_COMMAND_ELEMENT) {
-            fputs("shell: parser assertion: expected PAIR_SIMPLE_COMMAND_ELEMENT\n", stderr);
+            fputs(u8p("shell: parser assertion: expected PAIR_SIMPLE_COMMAND_ELEMENT\n"), stderr);
             exit(2);
         }
         if (pair->first_child->type == PAIR_WORD) {
@@ -349,21 +349,21 @@ uint64_t exec_shell_line(uint8_t *start, size_t length) {
             struct pair *redirect_pair = sce_pair->first_child;
             struct pair *redirect_operator = redirect_pair->first_child;
             struct pair *redirect_target_word = redirect_pair->first_child->next_sibling;
-            uint64_t redirect_fd;
-            if (strklcmp("<", redirect_operator->start, 1) == 0) {
+            uint64_t redirect_fd = 0; // out
+            if (strklcmp(u8p("<"), redirect_operator->start, 1) == 0) {
                 redirect_fd = 0;
-            } else if (strklcmp(">", redirect_operator->start, 1) == 0) {
+            } else if (strklcmp(u8p(">"), redirect_operator->start, 1) == 0) {
                 redirect_fd = 1;
             } else {
-                fputs("shell: parser assertion: unexpected redirect operator\n", stderr);
+                fputs(u8p("shell: parser assertion: unexpected redirect operator\n"), stderr);
                 exit(2);
             }
             
             redirect_infos[redirect_index].fd = redirect_fd;
-            expand_word(redirect_target_word, &redirect_infos[redirect_index].target_path);
+            expand_word(redirect_target_word, redirect_infos[redirect_index].target_path);
             redirect_index++;
         } else {
-            fputs("shell: parser assertion: unexpected pair type\n", stderr);
+            fputs(u8p("shell: parser assertion: unexpected pair type\n"), stderr);
             exit(2);
         }
     }
@@ -371,7 +371,7 @@ uint64_t exec_shell_line(uint8_t *start, size_t length) {
     exec_argv[num_words] = NULL;
 
     if (strcmp(u8p("exit"), exec_argv[0]) == 0) {
-        uint64_t exit_code;
+        uint64_t exit_code = 0;
         if (num_words > 1) {
             parse_n_dec(
                 exec_argv[1],
@@ -383,9 +383,9 @@ uint64_t exec_shell_line(uint8_t *start, size_t length) {
     }
 
     uint64_t child_pid = fork();
-    uint64_t child_exit_code;
+    uint64_t child_exit_code = 0;
     if (child_pid == 0) {
-        for (int i = 0; i < num_redirects; i++) {
+        for (uint64_t i = 0; i < num_redirects; i++) {
             struct redirect_info ri = redirect_infos[i];
             uint64_t old_fd = open(ri.target_path, O_CREAT | O_TRUNCATE);
             if (is_error(old_fd)) {
@@ -404,7 +404,7 @@ uint64_t exec_shell_line(uint8_t *start, size_t length) {
         exec(exec_argv[0], exec_argv);
         // Try with "bin" prefix
         uint8_t buffer[KEYBOARD_COMMAND_BUFFER_LENGTH];
-        strcpy(buffer, "bin/");
+        strcpy(buffer, u8p("bin/"));
         strcpy(buffer + 4, exec_argv[0]);
         exec(buffer, exec_argv);
         // Give up
@@ -414,7 +414,7 @@ uint64_t exec_shell_line(uint8_t *start, size_t length) {
         exit(1);
     } else {
         if (is_error(waitpid(child_pid, &child_exit_code))) {
-            fputs("shell: error waiting for subprocess\n", stderr);
+            fputs(u8p("shell: error waiting for subprocess\n"), stderr);
         }
     }
     // write(1, pair->start, pair->end - pair->start);
@@ -462,7 +462,7 @@ int main(int argc, char* argv[]) {
                 // Expect an escape code consisting of another 2 characters
                 uint8_t arrow_code[2];
                 read(0, arrow_code, 2);
-                if (memcmp(arrow_code, "[A", 2) == 0) {
+                if (memcmp(arrow_code, u8p("[A"), 2) == 0) {
                     // Reset horizontal cursor position
                     cursor_end_offset = 0;
                     // Swap current buffer with previous buffer
@@ -473,15 +473,15 @@ int main(int argc, char* argv[]) {
                     prev_keyboard_command_length = tmp_keyboard_command_length;
                     memcpy(prev_keyboard_command_buffer, tmp_keyboard_command_buffer, KEYBOARD_COMMAND_BUFFER_LENGTH);
                     rewrite_command_line(keyboard_command_buffer, keyboard_command_length, cursor_end_offset);
-                } else if (memcmp(arrow_code, "[B", 2) == 0) {
+                } else if (memcmp(arrow_code, u8p("[B"), 2) == 0) {
                     // Swallow arrow down
-                } else if (memcmp(arrow_code, "[C", 2) == 0) {
+                } else if (memcmp(arrow_code, u8p("[C"), 2) == 0) {
                     // Handle arrow right
                     if (cursor_end_offset > 0) {
                         cursor_end_offset--;
                         rewrite_command_line(keyboard_command_buffer, keyboard_command_length, cursor_end_offset);
                     }
-                } else if (memcmp(arrow_code, "[D", 2) == 0) {
+                } else if (memcmp(arrow_code, u8p("[D"), 2) == 0) {
                     // Handle arrow left
                     if (cursor_end_offset < keyboard_command_length) {
                         cursor_end_offset++;
@@ -533,9 +533,9 @@ int main(int argc, char* argv[]) {
     } else {
         size_t file_offset = 0;
         uint8_t script_buffer[SCRIPT_BUFFER_LENGTH];
-        ssize_t fd = open(argv[1], 0);
+        ssize_t fd = open(u8p(argv[1]), 0);
         if (is_error(fd)) {
-            fputs("shell: could not open script\n", stderr);
+            fputs(u8p("shell: could not open script\n"), stderr);
             exit(1);
         }
         while (true) {
@@ -556,7 +556,7 @@ int main(int argc, char* argv[]) {
                 }
             }
             if (line_length == -1) {
-                fputs("shell: incomplete line\n", stderr);
+                fputs(u8p("shell: incomplete line\n"), stderr);
                 exit(1);
             }
             // Exit on first child error

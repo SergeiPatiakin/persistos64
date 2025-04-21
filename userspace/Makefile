@@ -28,6 +28,7 @@ override CFLAGS += \
     -target x86_64-unknown-none \
     -Wall \
     -Wextra \
+	-Wno-unused-but-set-variable \
     -std=gnu11 \
     -ffreestanding \
     -fno-stack-protector \

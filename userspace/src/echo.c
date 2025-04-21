@@ -6,18 +6,18 @@
 void main(int argc, char* argv[]) {
     bool trailing_newline = true;
     for (int i = 1; i < argc; i++) {
-        if (i == 1 && strcmp(argv[i], "-n") == 0) {
+        if (i == 1 && strcmp(u8p(argv[i]), u8p("-n")) == 0) {
             // Handle -n argument
             trailing_newline = false;
             continue;
         }
-        puts(argv[i]);
+        puts(u8p(argv[i]));
         if (i < argc - 1) {
-            puts(" ");
+            puts(u8p(" "));
         }
     }
     if (trailing_newline) {
-        puts("\n");
+        puts(u8p("\n"));
     }
     exit(0);
 }

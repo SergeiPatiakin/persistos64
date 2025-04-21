@@ -15,13 +15,13 @@ void exec_shell() {
 }
 
 void main() {
-    open("dev/tty1", 0);
-    open("dev/tty1", 0);
-    open("dev/tty1", 0);
+    open(u8p("dev/tty1"), 0);
+    open(u8p("dev/tty1"), 0);
+    open(u8p("dev/tty1"), 0);
     puts(u8p("Persistos64 on tty1\n"));
     exec_shell();
 
-    uint64_t fd_tty2 = open("dev/tty2", 0);
+    uint64_t fd_tty2 = open(u8p("dev/tty2"), 0);
     dup2(fd_tty2, 0);
     dup2(fd_tty2, 1);
     dup2(fd_tty2, 2);
@@ -30,7 +30,7 @@ void main() {
     puts(u8p("Persistos64 on tty2\n"));
     exec_shell();
 
-    uint64_t fd_tty3 = open("dev/tty3", 0);
+    uint64_t fd_tty3 = open(u8p("dev/tty3"), 0);
     dup2(fd_tty3, 0);
     dup2(fd_tty3, 1);
     dup2(fd_tty3, 2);
