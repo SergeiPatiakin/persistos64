@@ -13,6 +13,8 @@ void io_wait(void);
 
 void halt_forever(void);
 void halt_until_any_interrupt(void);
+void enable_interrupts(void);
+void disable_interrupts(void);
 uint64_t read_rflags();
 
 uint64_t read_cr3();

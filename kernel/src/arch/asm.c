@@ -29,6 +29,14 @@ void io_wait(void) {
     outb(0x80, 0);
 }
 
+void enable_interrupts(void) {
+    asm volatile ("sti");
+}
+
+void disable_interrupts(void) {
+    asm volatile ("sti");
+}
+
 void halt_forever(void) {
     asm volatile ("cli; hlt");
 }
