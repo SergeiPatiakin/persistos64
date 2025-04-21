@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "arch/asm.h"
+#include "arch/if.h"
 #include "kernel/limine-requests.h"
 #include "drivers/tty.h"
 #include "mm/kmem.h"
@@ -62,6 +63,8 @@ void *kpage_alloc(size_t num_pages) {
     size_t i = 0;
     size_t consecutive_free = 0;
     size_t first_page_index = 0;
+    uint8_t state;
+    irq_disable(state);
     while (true) {
         if (i >= kmem_total_pages) {
             panic(u8p("Out of physical memory\n"));
@@ -81,7 +84,8 @@ void *kpage_alloc(size_t num_pages) {
     for (size_t j = first_page_index; j < first_page_index + num_pages; j++) {
         kmem_page_array[j].status = KPAGE_USED;
     }
-    kmem_used_pages += num_pages;
+    __atomic_fetch_add(&kmem_used_pages, num_pages, __ATOMIC_SEQ_CST);
+    irq_restore(state);
     return (void*)kmem_start + (first_page_index << 12);
 }
 
@@ -90,11 +94,11 @@ void kpage_free(void *page, size_t num_pages) {
     for (size_t j = first_page_index; j < first_page_index + num_pages; j++) {
         kmem_page_array[j].status = KPAGE_FREE;
     }
-    kmem_used_pages -= num_pages;
+    __atomic_fetch_sub(&kmem_used_pages, num_pages, __ATOMIC_SEQ_CST);
 }
 
 void *dpage_alloc(size_t num_pages) {
     uint64_t mem = dmem_start + dmem_used_pages * PAGE_SIZE;
-    dmem_used_pages += num_pages;
+    __atomic_fetch_add(&dmem_used_pages, num_pages, __ATOMIC_SEQ_CST);
     return (void*)mem;
 }
