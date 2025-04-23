@@ -77,7 +77,7 @@ void* slab_alloc(struct slab_allocator *allocator) {
 void slab_free(struct slab_allocator *allocator, void* address) {
     // allocator->freed_objects++; // For debugging
     // memset(address, 0x50, allocator->object_size); // For debugging
-    struct slab_page_header *page_header = (void*)((uint64_t)address & 0xFFFFFFFFFFFFF000);
+    struct slab_page_header *page_header = (void*)((uint64_t)address & PAGE_ADDRESS_MASK);
     uint16_t page_offset = (address - sizeof(struct slab_page_header) - (void*)page_header);
     uint16_t slot_number =  page_offset / allocator->object_size;
     uint16_t slot_offset = page_offset % allocator->object_size;
