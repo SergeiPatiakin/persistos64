@@ -67,6 +67,7 @@ void *kpage_alloc(size_t num_pages) {
     irq_disable(state);
     while (true) {
         if (i >= kmem_total_pages) {
+            irq_restore(state);
             panic(u8p("Out of physical memory\n"));
         }
         if (kmem_page_array[i].status == KPAGE_FREE) {

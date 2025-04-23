@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include "arch/asm.h"
+#include "arch/if.h"
 #include "mm/slab.h"
 #include "mm/kmem.h"
 #include "mm/page.h"
@@ -7,7 +8,7 @@
 #include "lib/cstd.h"
 #include "lib/list.h"
 
-// Try allocating on existing page, return NULL if failed
+// Try allocating on existing page, return NULL if failed. Called under spinlock
 void *slab_try_alloc(struct slab_allocator *allocator) {
     for (
         struct list_head *page_le = allocator->slab_page_lh.next;
@@ -38,8 +39,10 @@ void *slab_try_alloc(struct slab_allocator *allocator) {
 }
 
 void* slab_alloc(struct slab_allocator *allocator) {
+    irq_state state;
+    irq_disable(state);
     void* address = slab_try_alloc(allocator);
-    if (address){
+    if (address) {
         goto finalize;
     }
     // No free slots found on any page, time to allocate a new page
@@ -60,10 +63,12 @@ void* slab_alloc(struct slab_allocator *allocator) {
     // Allocation will now surely succeed
     address = slab_try_alloc(allocator);
     if (!address) {
+        irq_restore(state);
         panic(u8p("Slab allocation unexpectedly failed"));
     }
 
     finalize:
+    irq_restore(state);
     // allocator->allocated_objects++; // For debugging
     // memset(address, 0x11, allocator->object_size); // For debugging
     return address;
