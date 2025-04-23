@@ -1,4 +1,5 @@
 #include "arch/asm.h"
+#include "arch/if.h"
 #include "drivers/device-numbers.h"
 #include "drivers/pci.h"
 #include "drivers/tty.h"
@@ -49,6 +50,8 @@ struct nvme_cq_entry {
 
 uint16_t start_command(struct nvme_device *dev) {
     uint16_t command_id = 0;
+    irq_state state;
+    irq_disable(state);
     while(dev->command_statuses[command_id] != NVME_COMMAND_FREE){
         command_id++;
         if (command_id == NVME_MAX_COMMANDS) {
@@ -57,6 +60,7 @@ uint16_t start_command(struct nvme_device *dev) {
         }
     }
     dev->command_statuses[command_id] = NVME_COMMAND_IN_FLIGHT; // free -> in flight
+    irq_restore(state);
     return command_id;
 }
 
@@ -66,7 +70,10 @@ void finish_command(struct nvme_device *dev, uint16_t command_id) {
         printk_uint16(command_id);
         printk(u8p("\n"));
     }
+    irq_state state;
+    irq_disable(state);
     dev->command_statuses[command_id] = NVME_COMMAND_COMPLETED; // in flight -> completed
+    irq_restore(state);
 }
 
 // Must be called in task context
@@ -78,7 +85,10 @@ void await_command_finish(struct nvme_device *dev, uint16_t command_id) {
 
 
 void free_command(struct nvme_device *dev, uint16_t command_id) {
+    irq_state state;
+    irq_disable(state);
     dev->command_statuses[command_id] = NVME_COMMAND_FREE; // in progress -> completed
+    irq_restore(state);
 }
 
 // Must be called in boot context
@@ -169,7 +179,7 @@ void nvme_probe_2(struct nvme_device *nvme_device) {
     // Write AQA
     *((uint32_t*)(pci_device->mmio_virt_base + 0x24)) = ((uint32_t)NVME_QUEUE_SIZE_MINUS_ONE << 16) | (uint32_t)NVME_QUEUE_SIZE_MINUS_ONE;
 
-    // Enable controlller
+    // Enable controller
     *((uint32_t*)(pci_device->mmio_virt_base + 0x14)) = *((uint32_t*)(pci_device->mmio_virt_base + 0x14)) | NVME_IOSQ_ID;
 
     // Wait for ready bit to become set
@@ -208,7 +218,7 @@ void nvme_probe_2(struct nvme_device *nvme_device) {
 void nvme_probe_contents(struct nvme_device *dev) {
     // If ASQ is full, wait until there is an empty slot
     while ((dev->asq_tail + 1) % NVME_QUEUE_SIZE == dev->asq_head) {
-        // task_yield();
+        task_yield();
     }
     
     // Enqueue 'identify controller' command
