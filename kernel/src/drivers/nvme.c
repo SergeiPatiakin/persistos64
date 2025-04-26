@@ -1,11 +1,11 @@
 #include "arch/asm.h"
-#include "arch/if.h"
 #include "drivers/device-numbers.h"
 #include "drivers/pci.h"
 #include "drivers/tty.h"
 #include "drivers/nvmepart.h"
 #include "fs/vfs.h"
 #include "lib/cstd.h"
+#include "lib/spinlock.h"
 #include "kernel/scheduler.h"
 #include "mm/kmem.h"
 #include "mm/map.h"
@@ -51,7 +51,7 @@ struct nvme_cq_entry {
 uint16_t start_command(struct nvme_device *dev) {
     uint16_t command_id = 0;
     irq_state state;
-    irq_disable(state);
+    spinlock_acquire(&state);
     while(dev->command_statuses[command_id] != NVME_COMMAND_FREE){
         command_id++;
         if (command_id == NVME_MAX_COMMANDS) {
@@ -60,7 +60,7 @@ uint16_t start_command(struct nvme_device *dev) {
         }
     }
     dev->command_statuses[command_id] = NVME_COMMAND_IN_FLIGHT; // free -> in flight
-    irq_restore(state);
+    spinlock_release(state);
     return command_id;
 }
 
@@ -71,9 +71,9 @@ void finish_command(struct nvme_device *dev, uint16_t command_id) {
         printk(u8p("\n"));
     }
     irq_state state;
-    irq_disable(state);
+    spinlock_acquire(&state);
     dev->command_statuses[command_id] = NVME_COMMAND_COMPLETED; // in flight -> completed
-    irq_restore(state);
+    spinlock_release(state);
 }
 
 // Must be called in task context
@@ -86,9 +86,9 @@ void await_command_finish(struct nvme_device *dev, uint16_t command_id) {
 
 void free_command(struct nvme_device *dev, uint16_t command_id) {
     irq_state state;
-    irq_disable(state);
+    spinlock_acquire(&state);
     dev->command_statuses[command_id] = NVME_COMMAND_FREE; // in progress -> completed
-    irq_restore(state);
+    spinlock_release(state);
 }
 
 // Must be called in boot context

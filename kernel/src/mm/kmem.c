@@ -1,8 +1,8 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "arch/asm.h"
-#include "arch/if.h"
 #include "kernel/limine-requests.h"
+#include "lib/spinlock.h"
 #include "drivers/tty.h"
 #include "mm/kmem.h"
 #include "mm/page.h"
@@ -64,7 +64,7 @@ void *kpage_alloc(size_t num_pages) {
     size_t consecutive_free = 0;
     size_t first_page_index = 0;
     irq_state state;
-    irq_disable(state);
+    spinlock_acquire(&state);
     while (true) {
         if (i >= kmem_total_pages) {
             irq_restore(state);
@@ -86,7 +86,7 @@ void *kpage_alloc(size_t num_pages) {
         kmem_page_array[j].status = KPAGE_USED;
     }
     __atomic_fetch_add(&kmem_used_pages, num_pages, __ATOMIC_SEQ_CST);
-    irq_restore(state);
+    spinlock_release(state);
     return (void*)kmem_start + (first_page_index << 12);
 }
 

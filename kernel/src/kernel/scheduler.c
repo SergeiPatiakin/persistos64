@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include "arch/asm.h"
-#include "arch/if.h"
 #include "kernel/scheduler.h"
+#include "lib/spinlock.h"
 #include "mm/kmem.h"
 #include "mm/page.h"
 #include "mm/slab.h"
@@ -93,9 +93,9 @@ void free_task(struct task_struct *task) {
 		memory_ranges_le = next_memory_ranges_le;
 	}
 	irq_state state;
-	irq_disable(state);
+	spinlock_acquire(&state);
 	list_del(&task->task_struct_le);
-	irq_restore(state);
+	spinlock_release(state);
 	task_struct_free(task);
 }
 
@@ -106,7 +106,7 @@ void load_cr3_from(struct task_struct *process) {
 
 struct task_struct *task_struct_find(uint32_t pid) {
 	irq_state state;
-	irq_disable(state);
+	spinlock_acquire(&state);
     list_for_each(task_struct_le, task_struct_lh) {
         struct task_struct *candidate_task_struct = container_of(
 			task_struct_le,
@@ -118,6 +118,6 @@ struct task_struct *task_struct_find(uint32_t pid) {
             return candidate_task_struct;
         }
     }
-	irq_restore(state);
+	spinlock_release(state);
     return NULL;
 }
