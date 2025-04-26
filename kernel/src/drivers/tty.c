@@ -5,6 +5,7 @@
 #include "drivers/font.h"
 #include "fs/vfs.h"
 #include "lib/limine.h"
+#include "lib/spinlock.h"
 #include "lib/cstd.h"
 #include "kernel/limine-requests.h"
 #include "kernel/scheduler.h"
@@ -336,18 +337,22 @@ ssize_t vt_read(void *dev, uint8_t *buffer, uint64_t offset, size_t length) {
     uint8_t *buf = buffer;
     while(true) {
         task_yield();
+        irq_state state;
+        spinlock_acquire(&state);
         while (vt_device->input_rb_head_idx != vt_device->input_rb_tail_idx) {
             int8_t c = vt_device->input_rb[vt_device->input_rb_head_idx];
             *buf++ = c;
             vt_device->input_rb_head_idx = (vt_device->input_rb_head_idx + 1) % VT_INPUT_BUFFER_LENGTH;
             if (buf == buffer + length) {
+                spinlock_release(state);
                 return length;
             }
         }
+        spinlock_release(state);
     }
 }
 
-// Called in interrupt context
+// Called in interrupt context under ring buffer spinlock
 void vt_append_input_character(struct vt_device *vt_device, uint8_t character) {
     if (
         (VT_INPUT_BUFFER_LENGTH + vt_device->input_rb_head_idx - vt_device->input_rb_tail_idx)
@@ -363,6 +368,8 @@ void vt_append_input_character(struct vt_device *vt_device, uint8_t character) {
 
 // Called in interrupt context
 void vt_update_input(struct vt_device *vt_device, struct keyboard_event keyboard_event) {
+    irq_state state;
+    spinlock_acquire(&state);
     if (keyboard_event.symbol_type == KBD_ASCII) {
         vt_append_input_character(vt_device, keyboard_event.symbol);
     } else if (keyboard_event.symbol_type == KBD_NONASCII) {
@@ -401,6 +408,7 @@ void vt_update_input(struct vt_device *vt_device, struct keyboard_event keyboard
             }
         }
     }
+    spinlock_release(state);
 }
 
 // TODO: go through a ring buffer to allow use in interrupt context
