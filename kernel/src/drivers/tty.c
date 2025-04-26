@@ -211,23 +211,23 @@ void vt_repaint_terminal(struct vt_device *vt_device) {
 
 // Does not handle repaint
 void vt_shift_rows(struct vt_device *vt_device) {
-	// Shift all but last row
-	for (size_t y = 0; y < vt_device->terminal_height - 1; y++) {
-		for (size_t x = 0; x < vt_device->terminal_width; x++) {
-			const size_t source_index = VT_MAX_WIDTH * (y + 1) + x;
+    // Shift all but last row
+    for (size_t y = 0; y < vt_device->terminal_height - 1; y++) {
+        for (size_t x = 0; x < vt_device->terminal_width; x++) {
+            const size_t source_index = VT_MAX_WIDTH * (y + 1) + x;
             uint8_t character = vt_device->terminal_buffer[source_index];
             vt_set_char(vt_device, character, y, x);
-		}
-	}
-	// Clear last row
-	for (size_t x = 0; x < vt_device->terminal_width; x++) {
+        }
+    }
+    // Clear last row
+    for (size_t x = 0; x < vt_device->terminal_width; x++) {
         vt_set_char(vt_device, ' ', vt_device->terminal_height - 1, x);
-	}
+    }
 }
 
 ssize_t vt_write(void *dev, uint8_t *buffer, uint64_t offset, size_t length) {
     (void) offset; // Unused
-	struct vt_device *vt_device = dev;
+    struct vt_device *vt_device = dev;
     size_t bytes_written = 0;
     for (size_t i = 0; i < length; i++) {
         if (vt_device->escape_state.type == VT_ESCAPE_ESC_PAREN) {
@@ -413,7 +413,7 @@ void vt_update_input(struct vt_device *vt_device, struct keyboard_event keyboard
 
 // TODO: go through a ring buffer to allow use in interrupt context
 void printk(uint8_t* data) {
-	vt_write(&tty1, data, 0 /* dummy */, strlen(data));
+    vt_write(&tty1, data, 0 /* dummy */, strlen(data));
 }
 
 void panic(uint8_t *message) {

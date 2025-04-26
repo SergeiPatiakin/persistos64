@@ -4,8 +4,8 @@
 #include "arch/asm.h"
 
 void outb(uint16_t port, uint8_t value) {
-	//("a" puts value in eax, "dN" puts port in edx or uses 1-byte constant.)
-	asm volatile ("outb %0, %1" :: "a" (value), "dN" (port));
+    //("a" puts value in eax, "dN" puts port in edx or uses 1-byte constant.)
+    asm volatile ("outb %0, %1" :: "a" (value), "dN" (port));
 }
 
 uint8_t inb(uint16_t port) {
@@ -15,8 +15,8 @@ uint8_t inb(uint16_t port) {
 }
 
 void outl(uint16_t port, uint32_t value) {
-	//("a" puts value in eax, "dN" puts port in edx or uses 1-byte constant.)
-	asm volatile ("outl %0, %1" :: "a" (value), "dN" (port));
+    //("a" puts value in eax, "dN" puts port in edx or uses 1-byte constant.)
+    asm volatile ("outl %0, %1" :: "a" (value), "dN" (port));
 }
 
 uint32_t inl(uint16_t port) {

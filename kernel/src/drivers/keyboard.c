@@ -67,7 +67,7 @@ struct keyboard_event keymap_no_modifiers[128] = {
 
     {.symbol_type = KBD_ASCII, .symbol = '*'}, // 0x37 - numpad multiply
     {.symbol_type = KBD_NONASCII, .symbol = 0}, // 0x38 - alt
-    {.symbol_type = KBD_ASCII, .symbol = ' '},	// 0x39 - spacebar
+    {.symbol_type = KBD_ASCII, .symbol = ' '},  // 0x39 - spacebar
     {.symbol_type = KBD_NONASCII, .symbol = 0}, // 0x3A - caps lock
     {.symbol_type = KBD_NONASCII, .symbol = 0},
     {.symbol_type = KBD_NONASCII, .symbol = 0},
@@ -207,25 +207,12 @@ struct keyboard_event keymap_shift[128] = {
 /* The modifier keys currently pressed */
 static uint8_t depressed_mod_keys = 0;
 
-// #define KEYBOARD_BUFFER_LENGTH 256
-// size_t keyboard_rb_head_idx = 0;
-// size_t keyboard_rb_tail_idx = 0;
-// uint8_t keyboard_rb[KEYBOARD_BUFFER_LENGTH];
-
 // This function can be called in interrupt context
 void keyboard_rb_fill() {
     bool has_more_keys;
     do {
         uint8_t scancode = inb(0x60);
         has_more_keys = inb(0x64) & 0x1;
-        // if (
-        //     (KEYBOARD_BUFFER_LENGTH + keyboard_rb_head_idx - keyboard_rb_tail_idx)
-        //     % KEYBOARD_BUFFER_LENGTH
-        //     == 1
-        // ) {
-        //     // If head is 1 ahead of tail, the ring buffer is full so we have to drop events
-        //     continue;
-        // }
         switch(scancode) {
         case 0x2A: // Shift down
             depressed_mod_keys |= MOD_SHIFT;
@@ -270,10 +257,7 @@ void keyboard_rb_fill() {
             if (event.symbol == 0) {
                 break;
             }
-            // keyboard_rb[keyboard_rb_tail_idx] = character;
-            // keyboard_rb_tail_idx = (keyboard_rb_tail_idx + 1) % KEYBOARD_BUFFER_LENGTH;
             vt_update_input(active_vt_device, event);
-            // TODO: wait_queue_wake_and_destroy(&active_vt_device->keyboard_waitqueue_head);
         }
     } while (has_more_keys);
 }

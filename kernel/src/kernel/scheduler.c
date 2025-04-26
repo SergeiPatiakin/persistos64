@@ -27,28 +27,28 @@ void set_tss_for(struct task_struct *process) {
 
 // Get the next task_struct after ts. Wraps around
 struct task_struct *next_task_struct(struct task_struct* ts) {
-	struct list_head *task_struct_le;
-	task_struct_le = ts->task_struct_le.next;
-	if (task_struct_le == &task_struct_lh) {
-		// Wrap around
-		task_struct_le = task_struct_le->next;
-	}
+    struct list_head *task_struct_le;
+    task_struct_le = ts->task_struct_le.next;
+    if (task_struct_le == &task_struct_lh) {
+        // Wrap around
+        task_struct_le = task_struct_le->next;
+    }
     struct task_struct *result = container_of(task_struct_le, struct task_struct, task_struct_le);
     return result;
 }
 
 void task_yield() {
-	// Find next runnable task
-	struct task_struct *t = current_task_ts;
-	do {
-		t = next_task_struct(t);
+    // Find next runnable task
+    struct task_struct *t = current_task_ts;
+    do {
+        t = next_task_struct(t);
 
-		if (t == current_task_ts) {
-			// There are no running tasks. Idle the CPU until the next interrupt.
-			halt_until_any_interrupt();
-		}
-	} while (t->task_state != TS_RUNNING);
-	switch_to_task(t);
+        if (t == current_task_ts) {
+            // There are no running tasks. Idle the CPU until the next interrupt.
+            halt_until_any_interrupt();
+        }
+    } while (t->task_state != TS_RUNNING);
+    switch_to_task(t);
 }
 
 // Setup kernelspace memory and PML4. Switch to the new PML4.
@@ -78,25 +78,25 @@ void free_kernelspace_memory(struct task_struct *task) {
 
 // Perform final cleanup for a task after kernelspace memory and userspace memory has been freed
 void free_task(struct task_struct *task) {
-	// Free structs tracking memory ranges
-	for (
-		struct list_head *memory_ranges_le = task->memory_ranges_lh.next;
-		memory_ranges_le != &task->memory_ranges_lh;
-	) {
-		struct list_head *next_memory_ranges_le = memory_ranges_le->next;
-		struct userspace_memory_range *range = container_of(
-			memory_ranges_le,
-			struct userspace_memory_range,
-			memory_ranges_le
-		);
-		userspace_memory_range_free(range);
-		memory_ranges_le = next_memory_ranges_le;
-	}
-	irq_state state;
-	spinlock_acquire(&state);
-	list_del(&task->task_struct_le);
-	spinlock_release(state);
-	task_struct_free(task);
+    // Free structs tracking memory ranges
+    for (
+        struct list_head *memory_ranges_le = task->memory_ranges_lh.next;
+        memory_ranges_le != &task->memory_ranges_lh;
+    ) {
+        struct list_head *next_memory_ranges_le = memory_ranges_le->next;
+        struct userspace_memory_range *range = container_of(
+            memory_ranges_le,
+            struct userspace_memory_range,
+            memory_ranges_le
+        );
+        userspace_memory_range_free(range);
+        memory_ranges_le = next_memory_ranges_le;
+    }
+    irq_state state;
+    spinlock_acquire(&state);
+    list_del(&task->task_struct_le);
+    spinlock_release(state);
+    task_struct_free(task);
 }
 
 void load_cr3_from(struct task_struct *process) {
@@ -105,19 +105,19 @@ void load_cr3_from(struct task_struct *process) {
 }
 
 struct task_struct *task_struct_find(uint32_t pid) {
-	irq_state state;
-	spinlock_acquire(&state);
+    irq_state state;
+    spinlock_acquire(&state);
     list_for_each(task_struct_le, task_struct_lh) {
         struct task_struct *candidate_task_struct = container_of(
-			task_struct_le,
-			struct task_struct,
-			task_struct_le
-		);
+            task_struct_le,
+            struct task_struct,
+            task_struct_le
+        );
         if (candidate_task_struct->pid == pid) {
-			irq_restore(state);
+            irq_restore(state);
             return candidate_task_struct;
         }
     }
-	spinlock_release(state);
+    spinlock_release(state);
     return NULL;
 }
