@@ -114,7 +114,7 @@ struct task_struct *task_struct_find(uint32_t pid) {
             task_struct_le
         );
         if (candidate_task_struct->pid == pid) {
-            irq_restore(state);
+            spinlock_release(state);
             return candidate_task_struct;
         }
     }

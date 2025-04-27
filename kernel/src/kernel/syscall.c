@@ -242,27 +242,21 @@ uint64_t handle_syscall(
             return heap_range->end;
         }
         case SYSCALL_WAITPID: {
-            for (
-                struct list_head *task_struct_le = task_struct_lh.next;
-                task_struct_le != &task_struct_lh;
-                task_struct_le = task_struct_le->next
-            ) {
-                struct task_struct *process = container_of(task_struct_le, struct task_struct, task_struct_le);
-                if (process->pid == arg3) {
-                    // Await termination
-                    prep_await_wq(&process->termination_wq);
-                    task_yield();
-
-                    free_userspace_memory(process);
-                    free_kernelspace_memory(process);
-                    free_task(process);
-                    if (arg4) {
-                        *((uint64_t*)arg4) = process->exit_code;
-                    }
-                    return arg3;
-                }
+            struct task_struct *process = task_struct_find(arg3);
+            if (!process) {
+                return -1;
             }
-            return -1;
+            // Await termination of process
+            prep_await_wq(&process->termination_wq);
+            task_yield();
+
+            free_userspace_memory(process);
+            free_kernelspace_memory(process);
+            free_task(process);
+            if (arg4) {
+                *((uint64_t*)arg4) = process->exit_code;
+            }
+            return arg3;
         }
         case SYSCALL_OPEN: {
             struct vfs_lookup_result lookup_result;
