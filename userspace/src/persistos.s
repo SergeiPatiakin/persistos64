@@ -180,3 +180,12 @@ mount:
     movq $20, %rdi
     int $0x80
     retq
+
+.global pause
+pause:
+    movq %rdx, %rcx
+    movq %rsi, %rdx
+    movq %rdi, %rsi
+    movq $21, %rdi
+    int $0x80
+    retq

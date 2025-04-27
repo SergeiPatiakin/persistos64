@@ -40,7 +40,5 @@ void main() {
     exec_shell();
 
     // TODO: wait for all shells
-    while (true) {
-        sched_yield();
-    }
+    pause();
 }

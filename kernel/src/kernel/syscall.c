@@ -34,6 +34,7 @@
 #define SYSCALL_KILL 18
 #define SYSCALL_SLEEP 19
 #define SYSCALL_MOUNT 20
+#define SYSCALL_PAUSE 21
 
 uint64_t handle_syscall(
     uint64_t interrupt_rsp,
@@ -491,6 +492,11 @@ uint64_t handle_syscall(
             } else {
                 return -4;
             }
+        }
+        case SYSCALL_PAUSE: {
+            current_task_ts->task_state = TS_WAITING;
+            task_yield();
+            return 0;
         }
         default: {
             printk(u8p("Unrecognized syscall: "));

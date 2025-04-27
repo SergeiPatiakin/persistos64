@@ -30,9 +30,9 @@ void kt_hw_init_main() {
     for (int i = 0; i < num_nvme_devices; i++) {
         nvme_probe_2(&nvme_devices[i]);
     }
-    while (true) {
-        task_yield();
-    }
+    // Sleep forever
+    current_task_ts->task_state = TS_WAITING;
+    task_yield();
 }
 
 void kmain(void) {

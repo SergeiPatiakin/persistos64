@@ -36,5 +36,4 @@ void awake_wq(struct wait_queue *wq) {
 void prep_await_wq(struct wait_queue *wq) {
     list_add_tail(&current_task_ts->wait_queue_le, &wq->waiters_lh);
     current_task_ts->task_state = TS_WAITING;
-    task_yield();
 }

@@ -42,7 +42,10 @@ void halt_forever(void) {
 }
 
 void halt_until_any_interrupt(void) {
-    asm volatile ("sti; hlt");
+    irq_state state;
+    irq_enable(state);
+    asm volatile ("hlt");
+    irq_restore(state);
 }
 
 uint64_t read_rflags() {
