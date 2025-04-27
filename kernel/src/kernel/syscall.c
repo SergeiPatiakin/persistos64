@@ -84,7 +84,7 @@ uint64_t handle_syscall(
             setup_kernelspace_memory(new_process);
             init_list(&new_process->files_lh);
             init_list(&new_process->wait_queue_le);
-            init_list(&new_process->termination_waiters_lh);
+            init_wq(&new_process->termination_wq);
             
             // Clone memory ranges
             list_for_each(memory_ranges_le, current_task_ts->memory_ranges_lh) {
@@ -250,9 +250,7 @@ uint64_t handle_syscall(
                 struct task_struct *process = container_of(task_struct_le, struct task_struct, task_struct_le);
                 if (process->pid == arg3) {
                     // Await termination
-                    list_add_tail(&current_task_ts->wait_queue_le, &process->termination_waiters_lh);
-                    current_task_ts->task_state = TS_WAITING;
-                    task_yield();
+                    await_wq(&process->termination_wq);
 
                     free_userspace_memory(process);
                     free_kernelspace_memory(process);

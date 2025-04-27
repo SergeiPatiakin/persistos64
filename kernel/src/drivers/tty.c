@@ -5,7 +5,7 @@
 #include "drivers/font.h"
 #include "fs/vfs.h"
 #include "lib/limine.h"
-#include "lib/spinlock.h"
+#include "lib/sync.h"
 #include "lib/cstd.h"
 #include "kernel/limine-requests.h"
 #include "kernel/scheduler.h"

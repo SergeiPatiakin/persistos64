@@ -6,7 +6,7 @@
 #include "drivers/tty.h"
 #include "lib/cstd.h"
 #include "lib/list.h"
-#include "lib/spinlock.h"
+#include "lib/sync.h"
 
 // Try allocating on existing page, return NULL if failed. Called under spinlock
 void *slab_try_alloc(struct slab_allocator *allocator) {

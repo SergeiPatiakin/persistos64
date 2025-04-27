@@ -5,7 +5,7 @@
 #include "drivers/nvmepart.h"
 #include "fs/vfs.h"
 #include "lib/cstd.h"
-#include "lib/spinlock.h"
+#include "lib/sync.h"
 #include "kernel/scheduler.h"
 #include "mm/kmem.h"
 #include "mm/map.h"

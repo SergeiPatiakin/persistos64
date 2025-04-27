@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include "arch/asm.h"
 #include "kernel/scheduler.h"
-#include "lib/spinlock.h"
+#include "lib/sync.h"
 #include "mm/kmem.h"
 #include "mm/page.h"
 #include "mm/slab.h"
@@ -126,18 +126,5 @@ struct task_struct *task_struct_find(uint32_t pid) {
 void make_zombie(struct task_struct *task, uint8_t exit_code) {
     task->task_state = TS_ZOMBIE;
     task->exit_code = exit_code;
-    struct list_head *wp;
-    struct list_head w;
-    // Awake all termination waiters
-    for (
-        wp = task->termination_waiters_lh.next, w = *wp;
-        wp != &task->termination_waiters_lh;
-        wp = w.next, w = *wp
-    ) {
-        list_del(wp);
-        wp->next = wp;
-        wp->prev = wp;
-        struct task_struct *waiting_process = container_of(wp, struct task_struct, wait_queue_le);
-        waiting_process->task_state = TS_RUNNING;
-    }
+    wake_up(&task->termination_wq);
 }

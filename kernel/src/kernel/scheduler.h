@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include "lib/cstd.h"
 #include "lib/list.h"
+#include "lib/sync.h"
 #include "mm/slab.h"
 
 typedef struct {
@@ -37,7 +38,7 @@ struct task_struct {
     struct list_head task_struct_le;
     struct list_head files_lh; // List of struct file for this task
     struct list_head wait_queue_le;
-    struct list_head termination_waiters_lh;
+    struct wait_queue termination_wq;
 };
 
 ct_assert(offsetof(struct task_struct, kernel_rsp) == 8); // Update scheduler.s if this changes

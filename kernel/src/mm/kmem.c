@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include "arch/asm.h"
 #include "kernel/limine-requests.h"
-#include "lib/spinlock.h"
+#include "lib/sync.h"
 #include "drivers/tty.h"
 #include "mm/kmem.h"
 #include "mm/page.h"
