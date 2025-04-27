@@ -15,6 +15,9 @@ void main(int argc, char* argv[]) {
         uint32_t pid = *((uint32_t*)x);
         x += sizeof(uint32_t);
         
+        uint8_t state = *((uint8_t*)x);
+        x += sizeof(uint8_t);
+
         uint16_t len = *((uint16_t*)x);
         x += sizeof(uint16_t);
 
@@ -23,6 +26,13 @@ void main(int argc, char* argv[]) {
         
         sprintf_dec(pid, &pid_buf, ' ', 5);
         puts(pid_buf);
+        puts(" ");
+        puts(
+            state == TS_RUNNING ? "r" :
+            state == TS_WAITING ? "w" :
+            state == TS_ZOMBIE ? "z" :
+            " "
+        );
         puts(" ");
         puts(name);
         puts("\n");

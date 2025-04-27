@@ -440,6 +440,8 @@ uint64_t handle_syscall(
                 if (buf + len_required <= end_of_buf) {
                     *((uint32_t*)buf) = ts->pid;
                     buf += sizeof(uint32_t);
+                    *((uint8_t*)buf) = ts->task_state;
+                    buf += sizeof(uint8_t);
                     *((uint16_t*)buf) = ts_name_strlen;
                     buf += sizeof(uint16_t);
                     strcpy(buf, ts->name);
