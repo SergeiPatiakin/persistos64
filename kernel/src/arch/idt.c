@@ -2,7 +2,6 @@
 #include "arch/asm.h"
 #include "arch/idt.h"
 #include "arch/pic.h"
-#include "arch/if.h"
 #include "drivers/keyboard.h"
 #include "drivers/pit.h"
 #include "drivers/nvme.h"

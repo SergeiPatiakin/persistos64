@@ -1,4 +1,4 @@
-#include "arch/if.h"
+#include "arch/asm.h"
 #include "spinlock.h"
 
 void spinlock_acquire(irq_state *state) {
