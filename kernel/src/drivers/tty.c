@@ -59,6 +59,7 @@ void vt_device_init(
     vt->terminal_height = terminal_height;
     vt->escape_state.type = VT_ESCAPE_NONE;
     vt->device_number = device_number;
+    init_wq(&vt->input_wq);
 }
 
 void set_active_vt(struct vt_device *vt) {
@@ -348,6 +349,7 @@ ssize_t vt_read(void *dev, uint8_t *buffer, uint64_t offset, size_t length) {
                 return length;
             }
         }
+        prep_await_wq(&vt_device->input_wq);
         spinlock_release(state);
     }
 }
@@ -408,6 +410,7 @@ void vt_update_input(struct vt_device *vt_device, struct keyboard_event keyboard
             }
         }
     }
+    awake_wq(&vt_device->input_wq);
     spinlock_release(state);
 }
 

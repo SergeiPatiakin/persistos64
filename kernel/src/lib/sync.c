@@ -16,7 +16,7 @@ void init_wq(struct wait_queue *wq) {
     init_list(&wq->waiters_lh);
 }
 
-void wake_up(struct wait_queue *wq) {
+void awake_wq(struct wait_queue *wq) {
     struct list_head *wp;
     struct list_head w;
     // Awake all waiters
@@ -33,8 +33,7 @@ void wake_up(struct wait_queue *wq) {
     }
 }
 
-// Must not be called under spinlock
-void await_wq(struct wait_queue *wq) {
+void prep_await_wq(struct wait_queue *wq) {
     list_add_tail(&current_task_ts->wait_queue_le, &wq->waiters_lh);
     current_task_ts->task_state = TS_WAITING;
     task_yield();

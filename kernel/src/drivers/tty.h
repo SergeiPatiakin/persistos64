@@ -3,7 +3,8 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <lib/cstd.h>
+#include "lib/cstd.h"
+#include "lib/sync.h"
 #include "keyboard.h"
 
 #define VT_MAX_WIDTH 240
@@ -28,9 +29,10 @@ struct vt_device {
     uint8_t terminal_buffer[VT_MAX_WIDTH * VT_MAX_HEIGHT];
     uint8_t repaint_flags[VT_MAX_WIDTH * VT_MAX_HEIGHT / 8 + 1];
     struct limine_framebuffer *framebuffer;
+    uint32_t device_number;
     uint32_t input_rb_head_idx;
     uint32_t input_rb_tail_idx;
-    uint32_t device_number;
+    struct wait_queue input_wq;
     int8_t input_rb[VT_INPUT_BUFFER_LENGTH];
 };
 

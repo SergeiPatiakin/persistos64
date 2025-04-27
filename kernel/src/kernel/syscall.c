@@ -250,7 +250,8 @@ uint64_t handle_syscall(
                 struct task_struct *process = container_of(task_struct_le, struct task_struct, task_struct_le);
                 if (process->pid == arg3) {
                     // Await termination
-                    await_wq(&process->termination_wq);
+                    prep_await_wq(&process->termination_wq);
+                    task_yield();
 
                     free_userspace_memory(process);
                     free_kernelspace_memory(process);

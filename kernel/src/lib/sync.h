@@ -11,7 +11,7 @@ struct wait_queue {
 };
 
 void init_wq(struct wait_queue *wq);
-void wake_up(struct wait_queue *wq);
-void await_wq(struct wait_queue *wq);
+void awake_wq(struct wait_queue *wq);
+void prep_await_wq(struct wait_queue *wq);
 
 #endif

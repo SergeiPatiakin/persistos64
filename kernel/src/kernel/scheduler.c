@@ -126,5 +126,5 @@ struct task_struct *task_struct_find(uint32_t pid) {
 void make_zombie(struct task_struct *task, uint8_t exit_code) {
     task->task_state = TS_ZOMBIE;
     task->exit_code = exit_code;
-    wake_up(&task->termination_wq);
+    awake_wq(&task->termination_wq);
 }
