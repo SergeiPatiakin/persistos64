@@ -60,8 +60,7 @@ uint64_t handle_syscall(
             return read_result;
         }
         case SYSCALL_EXIT: {
-            current_task_ts->task_state = TS_ZOMBIE;
-            current_task_ts->exit_code = arg3;
+            make_zombie(current_task_ts, arg3);
             task_yield();
             // No return
         }
@@ -84,6 +83,8 @@ uint64_t handle_syscall(
             list_add_tail(&new_process->task_struct_le, &task_struct_lh);
             setup_kernelspace_memory(new_process);
             init_list(&new_process->files_lh);
+            init_list(&new_process->wait_queue_le);
+            init_list(&new_process->termination_waiters_lh);
             
             // Clone memory ranges
             list_for_each(memory_ranges_le, current_task_ts->memory_ranges_lh) {
@@ -248,9 +249,11 @@ uint64_t handle_syscall(
             ) {
                 struct task_struct *process = container_of(task_struct_le, struct task_struct, task_struct_le);
                 if (process->pid == arg3) {
-                    while (process->task_state != TS_ZOMBIE) {
-                        task_yield();
-                    }
+                    // Await termination
+                    list_add_tail(&current_task_ts->wait_queue_le, &process->termination_waiters_lh);
+                    current_task_ts->task_state = TS_WAITING;
+                    task_yield();
+
                     free_userspace_memory(process);
                     free_kernelspace_memory(process);
                     free_task(process);
@@ -454,8 +457,7 @@ uint64_t handle_syscall(
             if (!task) {
                 return -1;
             }
-            task->task_state = TS_ZOMBIE;
-            task->exit_code = -1;
+            make_zombie(task, 255); // TODO: better exit code
             // In case process is killing itself, make sure it doesn't return from this syscall
             task_yield();
             return 0;

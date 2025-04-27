@@ -49,15 +49,13 @@ void cpu_exception_handler(
 ) {
     if (interrupt_number == 0) {
         printk(u8p("Division by zero\n"));
-        current_task_ts->task_state = TS_ZOMBIE;
-        current_task_ts->exit_code = 1; // TODO
+        make_zombie(current_task_ts, 1); // TODO: better exit code
         task_yield();
     } else if (interrupt_number == 8) {
         panic(u8p("Double fault\n"));
     } else if (interrupt_number == 13) {
         printk(u8p("General protection fault\n"));
-        current_task_ts->task_state = TS_ZOMBIE;
-        current_task_ts->exit_code = 128 + 11; // 11 is SIGSEGV
+        make_zombie(current_task_ts, 128 + 11); // 11 is SIGSEGV
         task_yield();
     } else if (interrupt_number == 14) {
         uint8_t access_address_buf[17];
@@ -74,8 +72,8 @@ void cpu_exception_handler(
         printk(u8p(". The memory could not be "));
         printk(error_code & 0x2 ? u8p("written.") : u8p("read."));
         printk(u8p("\n"));
-        current_task_ts->task_state = TS_ZOMBIE;
-        current_task_ts->exit_code = 1; // TODO
+
+        make_zombie(current_task_ts, 1); // TODO: better exit code
         task_yield();
     } else {
         panic(u8p("Unknown CPU exception"));

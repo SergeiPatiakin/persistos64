@@ -79,6 +79,8 @@ void kmain(void) {
     init_list(&init_process->memory_ranges_lh);
     list_add_tail(&init_process->task_struct_le, &task_struct_lh);
     init_list(&init_process->files_lh);
+    init_list(&init_process->wait_queue_le);
+    init_list(&init_process->termination_waiters_lh);
 
     setup_kernelspace_memory(init_process);
     load_cr3_from(init_process);
@@ -136,6 +138,8 @@ void kmain(void) {
     init_list(&kt_hw_init->memory_ranges_lh);
     list_add_tail(&kt_hw_init->task_struct_le, &task_struct_lh);
     init_list(&kt_hw_init->files_lh);
+    init_list(&kt_hw_init->wait_queue_le);
+    init_list(&kt_hw_init->termination_waiters_lh);
     setup_kernelspace_memory(kt_hw_init);
     
     uint64_t *kt_hw_init_first_entry_rsp = (uint64_t*)(kt_hw_init->kernel_entry_rsp);

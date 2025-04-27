@@ -35,8 +35,9 @@ struct task_struct {
     uint8_t name[TASK_NAME_MAXLEN];
     struct list_head memory_ranges_lh;
     struct list_head task_struct_le;
-    // struct list_head termination_wait_queue_head;
     struct list_head files_lh; // List of struct file for this task
+    struct list_head wait_queue_le;
+    struct list_head termination_waiters_lh;
 };
 
 ct_assert(offsetof(struct task_struct, kernel_rsp) == 8); // Update scheduler.s if this changes
@@ -57,6 +58,7 @@ void free_kernelspace_memory(struct task_struct *task);
 void free_task(struct task_struct *task);
 void load_cr3_from(struct task_struct *process);
 struct task_struct *task_struct_find(uint32_t pid);
+void make_zombie(struct task_struct *task, uint8_t exit_code);
 
 // In assembly
 void switch_to_task(struct task_struct *new_task);
