@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include "arch/asm.h"
+#include "arch/idt.h"
 #include "kernel/scheduler.h"
 #include "lib/sync.h"
 #include "mm/kmem.h"
@@ -39,16 +40,16 @@ struct task_struct *next_task_struct(struct task_struct* ts) {
 
 void task_yield() {
     // Find next runnable task
+    // Assumes there is at least one runnable task
     struct task_struct *t = current_task_ts;
     do {
         t = next_task_struct(t);
-
-        if (t == current_task_ts) {
-            // There are no running tasks. Idle the CPU until the next interrupt.
-            halt_until_any_interrupt();
-        }
     } while (t->task_state != TS_RUNNING);
-    switch_to_task(t);
+
+    if (t != current_task_ts) {
+        switch_to_task(t);
+    }
+    last_switch_timer_ticks = timer_ticks;
 }
 
 // Setup kernelspace memory and PML4. Switch to the new PML4.

@@ -3,6 +3,17 @@
 #include "cstd.h"
 #include <persistos.h>
 
+void exec_loop() {
+    uint32_t loop_pid = fork();
+    if (loop_pid == 0) {
+        uint8_t *loop_argv[] = { u8p("bin/loop"), u8p("yield"), NULL };
+        if (is_error(exec(loop_argv[0], loop_argv))) {
+            fputs(u8p("init: error starting loop\n"), stderr);
+            return;
+        }
+    }
+}
+
 void exec_shell() {
     uint32_t shell_pid = fork();
     if (shell_pid == 0) {
@@ -18,6 +29,8 @@ void main() {
     open(u8p("dev/tty1"), 0);
     open(u8p("dev/tty1"), 0);
     open(u8p("dev/tty1"), 0);
+    exec_loop();
+
     puts(u8p("Persistos64 on tty1\n"));
     exec_shell();
 

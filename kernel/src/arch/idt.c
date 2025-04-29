@@ -80,6 +80,7 @@ void cpu_exception_handler(
 }
 
 uint64_t timer_ticks = 0;
+uint64_t last_switch_timer_ticks = 0;
 uint64_t hw_interrupt_handler(
     uint32_t interrupt_number,
     uint64_t arg1,
@@ -94,6 +95,9 @@ uint64_t hw_interrupt_handler(
     } else if (interrupt_line == 0x0) {
         timer_ticks++;
         pic_send_eoi(interrupt_line);
+        if (current_task_ts && last_switch_timer_ticks > 0 && last_switch_timer_ticks + 10 < timer_ticks) {
+            task_yield();
+        }
     } else if (interrupt_line == 0x1) {
         // Keyboard interrupt
         keyboard_rb_fill();

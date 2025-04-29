@@ -25,6 +25,7 @@ void zero_rax_and_iret();
 // idt.c
 
 extern uint64_t timer_ticks;
+extern uint64_t last_switch_timer_ticks;
 #define TIMER_TICKS_PER_SECOND 100
 
 #endif
