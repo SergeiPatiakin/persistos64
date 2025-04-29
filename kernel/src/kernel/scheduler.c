@@ -39,6 +39,8 @@ struct task_struct *next_task_struct(struct task_struct* ts) {
 }
 
 void task_yield() {
+    irq_state state;
+    irq_disable(state);
     // Find next runnable task
     // Assumes there is at least one runnable task
     struct task_struct *t = current_task_ts;
@@ -49,6 +51,7 @@ void task_yield() {
     if (t != current_task_ts) {
         switch_to_task(t);
     }
+    irq_restore(state);
     last_switch_timer_ticks = timer_ticks;
 }
 
