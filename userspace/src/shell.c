@@ -6,6 +6,7 @@
 #define KEYBOARD_COMMAND_BUFFER_LENGTH 400
 #define SCRIPT_BUFFER_LENGTH 400
 uint8_t *command_prompt = u8p("# ");
+uint8_t last_exit_code = 0;
 
 #define PAIR_OMS 0xB1
 #define PAIR_UNQUOTED_STRING 0xB2
@@ -372,55 +373,71 @@ uint64_t exec_shell_line(uint8_t *start, size_t length) {
 
     if (strcmp(u8p("exit"), exec_argv[0]) == 0) {
         uint64_t exit_code = 0;
-        if (num_words > 1) {
-            parse_n_dec(
-                exec_argv[1],
-                strlen(exec_argv[1]),
-                &exit_code
-            );
+        if (num_words > 2) {
+            fputs(u8p("shell: builtin exit can have at most one argument\n"), stderr);
+            exit(1);
+        } else if (num_words > 1) {
+            if (parse_n_dec(exec_argv[1], strlen(exec_argv[1]), &exit_code) == 0) {
+                fputs(u8p("shell: failed to parse exit code for exit builtin\n"), stderr);
+                exit(1);
+            };
         }
         exit(exit_code);
     }
-
-    uint64_t child_pid = fork();
     uint64_t child_exit_code = 0;
-    if (child_pid == 0) {
-        for (uint64_t i = 0; i < num_redirects; i++) {
-            struct redirect_info ri = redirect_infos[i];
-            uint64_t old_fd = open(ri.target_path, O_CREAT | O_TRUNCATE);
-            if (is_error(old_fd)) {
-                fputs(u8p("shell: failed to open file for redirect\n"), stderr);
+    if (strcmp(u8p("assert_exit_code"), exec_argv[0]) == 0) {
+        uint64_t expected_exit_code = 0;
+        if (num_words > 2) {
+            fputs(u8p("shell: builtin assert_exit_code can have at most one argument\n"), stderr);
+            exit(1);
+        } else if (num_words > 1) {
+            if (parse_n_dec(exec_argv[1], strlen(exec_argv[1]), &expected_exit_code) == 0) {
+                fputs(u8p("shell: failed to parse exit code for assert_exit_code builtin\n"), stderr);
                 exit(1);
-            }
-            uint64_t dup2_result = dup2(old_fd, ri.fd);
-            if (is_error(dup2_result)) {
-                fputs(u8p("shell: failed to duplicate fd"), stderr);
-                exit(1);
-            }
-            close(old_fd);
+            };
         }
-
-        // Try with no prefix
-        exec(exec_argv[0], exec_argv);
-        // Try with "bin" prefix
-        uint8_t buffer[KEYBOARD_COMMAND_BUFFER_LENGTH];
-        strcpy(buffer, u8p("bin/"));
-        strcpy(buffer + 4, exec_argv[0]);
-        exec(buffer, exec_argv);
-        // Give up
-        fputs(u8p("shell: command not found: "), stderr);
-        fputs(exec_argv[0], stderr);
-        fputs(u8p("\n"), stderr);
-        exit(1);
+        if (last_exit_code != expected_exit_code) {
+            fputs(u8p("shell: unexpected exit code\n"), stderr);
+            exit(1);
+        }
     } else {
-        if (is_error(waitpid(child_pid, &child_exit_code))) {
-            fputs(u8p("shell: error waiting for subprocess\n"), stderr);
+        uint64_t child_pid = fork();
+        if (child_pid == 0) {
+            for (uint64_t i = 0; i < num_redirects; i++) {
+                struct redirect_info ri = redirect_infos[i];
+                uint64_t old_fd = open(ri.target_path, O_CREAT | O_TRUNCATE);
+                if (is_error(old_fd)) {
+                    fputs(u8p("shell: failed to open file for redirect\n"), stderr);
+                    exit(1);
+                }
+                uint64_t dup2_result = dup2(old_fd, ri.fd);
+                if (is_error(dup2_result)) {
+                    fputs(u8p("shell: failed to duplicate fd"), stderr);
+                    exit(1);
+                }
+                close(old_fd);
+            }
+
+            // Try with no prefix
+            exec(exec_argv[0], exec_argv);
+            // Try with "bin" prefix
+            uint8_t buffer[KEYBOARD_COMMAND_BUFFER_LENGTH];
+            strcpy(buffer, u8p("bin/"));
+            strcpy(buffer + 4, exec_argv[0]);
+            exec(buffer, exec_argv);
+            // Give up
+            fputs(u8p("shell: command not found: "), stderr);
+            fputs(exec_argv[0], stderr);
+            fputs(u8p("\n"), stderr);
+            exit(1);
+        } else {
+            if (is_error(waitpid(child_pid, &child_exit_code))) {
+                fputs(u8p("shell: error waiting for subprocess\n"), stderr);
+            }
         }
     }
-    // write(1, pair->start, pair->end - pair->start);
-    // puts(u8p("\n"));
-
     free(stmt_result); // TODO: recursive free
+    last_exit_code = child_exit_code;
     return child_exit_code;
 }
 
@@ -560,10 +577,7 @@ int main(int argc, char* argv[]) {
                 exit(1);
             }
             // Exit on first child error
-            uint64_t child_exit_code = exec_shell_line(script_buffer, line_length);
-            if (child_exit_code != 0) {
-                exit(child_exit_code);
-            }
+            exec_shell_line(script_buffer, line_length);
             size_t rewind_bytes = bytes_read - (line_length + 1);
             size_t new_offset = file_offset - rewind_bytes;
             lseek(fd, new_offset, 0);
