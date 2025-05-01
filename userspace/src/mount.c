@@ -2,9 +2,9 @@
 #include "cstd.h"
 #include <persistos.h>
 
-void main(int argc, char* argv[]) {
+void main(int argc, uint8_t* argv[]) {
     if (argc < 4) {
-        fputs("mount: expected three arguments\n", stderr);
+        fputs(u8p("mount: expected three arguments\n"), stderr);
         exit(1);
     }
     mount(argv[1], argv[2], argv[3]);

@@ -9,22 +9,22 @@ void main(int argc, char* argv[]) {
     } else {
         path = argv[1];
     }
-    uint64_t fd = open(path, 0);
+    uint64_t fd = open(u8p(path), 0);
     if (is_error(fd)) {
-        fputs("Error opening\n", stderr);
+        fputs(u8p("Error opening\n"), stderr);
         exit(1);        
     }
-    char buf[4096];
+    uint8_t buf[4096];
     ssize_t bytes_read = getdents(fd, buf, 4096);
     if (is_error(bytes_read)) {
-        fputs("Error in getdents\n", stderr);
+        fputs(u8p("Error in getdents\n"), stderr);
         exit(1);
     }
     uint8_t *x = buf;
     while (x < buf + bytes_read) {
         uint16_t len = *((uint16_t*)x);
         puts(x + sizeof(uint16_t));
-        puts("\n");
+        puts(u8p("\n"));
         x += len;
     }
     exit(0);

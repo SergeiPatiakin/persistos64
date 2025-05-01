@@ -2,33 +2,33 @@
 #include "cstd.h"
 #include <persistos.h>
 
-void main(int argc, char* argv[]) {
+void main(int argc, uint8_t* argv[]) {
     if (argc < 2) {
-        fputs("hd: Expected a filepath argument\n", stderr);
+        fputs(u8p("hd: Expected a filepath argument\n"), stderr);
         exit(1);
     }
     
     uint64_t length_limit = 0;
     if (argc > 2) {
-        if (strcmp(argv[2], "-n") == 0) {
+        if (strcmp(argv[2], u8p("-n")) == 0) {
             if (argc < 4) {
-                fputs("hd: Expected a length limit\n", stderr);
+                fputs(u8p("hd: Expected a length limit\n"), stderr);
                 exit(1);
             }
             uint8_t parse_result = parse_n_dec(argv[3], 100, &length_limit);
             if (parse_result != strlen(argv[3])) {
-                fputs("hd: parse error\n", stderr);
+                fputs(u8p("hd: parse error\n"), stderr);
                 exit(1);
             }
         } else {
-            fputs("hd: Unexpected argument\n", stderr);
+            fputs(u8p("hd: Unexpected argument\n"), stderr);
             exit(1);
         }
     }
 
     uint64_t fd = open(argv[1], 0);
     if (is_error(fd)) {
-        fputs("Error opening\n", stderr);
+        fputs(u8p("Error opening\n"), stderr);
         exit(1);
     }
 
@@ -37,9 +37,9 @@ void main(int argc, char* argv[]) {
     uint32_t file_offset = 0;
     
     while (true) {
-        ssize_t bytes_read = read(fd, &binary_buffer, 16);
+        ssize_t bytes_read = read(fd, binary_buffer, 16);
         if (is_error(bytes_read)) {
-            fputs("Error reading\n", stderr);
+            fputs(u8p("Error reading\n"), stderr);
             exit(1);
         }
         if (bytes_read == 0) {
@@ -49,7 +49,7 @@ void main(int argc, char* argv[]) {
         memset(&text_buffer, 0, 38);
         sprintf_uint32(file_offset, text_buffer);
         puts(text_buffer);
-        puts(":");
+        puts(u8p(":"));
 
         memset(&text_buffer, 0, 38);
         for (int i = 0; i < 4; i++) {
@@ -62,7 +62,7 @@ void main(int argc, char* argv[]) {
             if (bytes_read >= 4*i + 4) sprintf_uint8(binary_buffer[4*i + 3], &text_buffer[9*i + 7]);
         }
         puts(text_buffer);
-        puts("\n");
+        puts(u8p("\n"));
         file_offset += bytes_read;
         if (length_limit != 0 && file_offset > length_limit) {
             break;
@@ -74,7 +74,7 @@ void main(int argc, char* argv[]) {
         memset(&text_buffer, 0, 38);
         sprintf_uint32(file_offset, text_buffer);
         puts(text_buffer);
-        puts(":\n");
+        puts(u8p(":\n"));
     }
 
     exit(0);

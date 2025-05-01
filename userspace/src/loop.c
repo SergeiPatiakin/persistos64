@@ -5,17 +5,17 @@
 
 void main(int argc, char* argv[]) {
     if (argc < 2) {
-        fputs("Expected a loop type argument\n", stderr);
+        fputs(u8p("Expected a loop type argument\n"), stderr);
         exit(1);
     }
-    if (strcmp(argv[1], "busy") == 0) {
+    if (strcmp(u8p(argv[1]), u8p("busy")) == 0) {
         while (true);
-    } else if (strcmp(argv[1], "yield") == 0) {
+    } else if (strcmp(u8p(argv[1]), u8p("yield")) == 0) {
         while (true) sched_yield();
-    } else if (strcmp(argv[1], "sleep") == 0) {
+    } else if (strcmp(u8p(argv[1]), u8p("sleep")) == 0) {
         while (true) pause();
     } else {
-        fputs("Unknown loop type\n", stderr);
+        fputs(u8p("Unknown loop type\n"), stderr);
         exit(1);
     }
 }

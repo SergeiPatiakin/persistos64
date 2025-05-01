@@ -2,12 +2,14 @@
 #include "cstd.h"
 #include <persistos.h>
 
-void main(int argc, char* argv[]) {
-    char buf[4096];
-    char pid_buf[12];
+void main(int argc, uint8_t* argv[]) {
+    (void) argc;
+    (void) argv; 
+    uint8_t buf[4096];
+    uint8_t pid_buf[12];
     ssize_t bytes_read = gettasks(buf, 4096);
     if (is_error(bytes_read)) {
-        fputs("Error in gettasks\n", stderr);
+        fputs(u8p("Error in gettasks\n"), stderr);
         exit(1);
     }
     uint8_t *x = buf;
@@ -24,17 +26,17 @@ void main(int argc, char* argv[]) {
         uint8_t *name = x;
         x += len + 1;
         
-        sprintf_dec(pid, &pid_buf, ' ', 5);
+        sprintf_dec(pid, pid_buf, ' ', 5);
         puts(pid_buf);
-        puts(" ");
+        puts(u8p(" "));
         puts(
-            state == TS_RUNNING ? "r" :
-            state == TS_WAITING ? "w" :
-            state == TS_ZOMBIE ? "z" :
-            " "
+            state == TS_RUNNING ? u8p("r") :
+            state == TS_WAITING ? u8p("w") :
+            state == TS_ZOMBIE ? u8p("z") :
+            u8p(" ")
         );
-        puts(" ");
+        puts(u8p(" "));
         puts(name);
-        puts("\n");
+        puts(u8p("\n"));
     }
 }

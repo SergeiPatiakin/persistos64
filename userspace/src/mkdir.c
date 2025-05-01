@@ -4,12 +4,12 @@
 
 void main(int argc, char* argv[]) {
     if (argc < 2) {
-        fputs("Expected a filepath argument\n", stderr);
+        fputs(u8p("Expected a filepath argument\n"), stderr);
         exit(1);
     }
-    uint64_t x = mkdir(argv[1]);
+    uint64_t x = mkdir(u8p(argv[1]));
     if (is_error(x)) {
-        fputs("Error\n", stderr);
+        fputs(u8p("Error\n"), stderr);
         exit(1);
     }
     exit(0);
