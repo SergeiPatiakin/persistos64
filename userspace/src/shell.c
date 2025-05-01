@@ -301,17 +301,19 @@ void expand_word(struct pair *word_pair, uint8_t *out_buffer) {
     }
 }
 
-uint64_t exec_shell_line(uint8_t *start, size_t length) {
+void exec_shell_line(uint8_t *start, size_t length) {
     struct pair *stmt_result = parse_shell_stmt(start, length);
     if (!stmt_result) {
         fputs(u8p("shell: syntax error\n"), stderr);
-        return 1;
+        last_exit_code = 1;
+        return;
     }
     if (stmt_result->end != start + length) {
         fputs(u8p("shell: syntax error, unexpected '"), stderr);
         write(2, start + length, 1);
         fputs(u8p("'\n"), stderr);
-        return 1;
+        last_exit_code = 1;
+        return;
     }
 
     // Count words
@@ -332,7 +334,7 @@ uint64_t exec_shell_line(uint8_t *start, size_t length) {
     if (num_words == 0) {
         // No-op
         free(stmt_result);
-        return 0;
+        return;
     }
     uint8_t **exec_argv = malloc((num_words + 1) * sizeof(void*));
     struct redirect_info *redirect_infos = malloc(num_redirects * sizeof(struct redirect_info));
@@ -438,7 +440,7 @@ uint64_t exec_shell_line(uint8_t *start, size_t length) {
     }
     free(stmt_result); // TODO: recursive free
     last_exit_code = child_exit_code;
-    return child_exit_code;
+    return;
 }
 
 void rewrite_command_line(
@@ -576,7 +578,6 @@ int main(int argc, char* argv[]) {
                 fputs(u8p("shell: incomplete line\n"), stderr);
                 exit(1);
             }
-            // Exit on first child error
             exec_shell_line(script_buffer, line_length);
             size_t rewind_bytes = bytes_read - (line_length + 1);
             size_t new_offset = file_offset - rewind_bytes;
