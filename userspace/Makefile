@@ -78,25 +78,25 @@ override LDFLAGS += \
 all: build/initrd.bin
 
 EXECUTABLE_FILES = \
-    init \
-	shell \
-	loop \
+	cat \
+	clear \
+	diff \
 	echo \
 	fault \
-	clear \
-	touch \
+	hd \
+	increment \
+    init \
+	kill \
+	loop \
 	ls \
 	mkdir \
-	increment \
-	hd \
-	truncate \
-	cat \
-	test.sh \
-	diff \
+	mount \
 	ps \
-	kill \
 	sleep \
-	mount
+	shell \
+	test.sh \
+	touch \
+	truncate
 EXECUTABLE_TARGETS = $(addprefix build/, $(EXECUTABLE_FILES))
 EXECUTABLE_TARGETS_RELPATHS = $(addprefix bin/, $(EXECUTABLE_FILES))
 
@@ -110,17 +110,17 @@ build/initrd.bin: Makefile $(EXECUTABLE_TARGETS)
 LIBC_OBJECT_FILES = build/persistos.c.o build/persistos.s.o build/cstd.c.o
 
 # Link rules
-build/init: Makefile linker.ld build/init.c.o $(LIBC_OBJECT_FILES)
+build/cat: Makefile linker.ld build/cat.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"
-	$(LD) build/init.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
+	$(LD) build/cat.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
 
-build/shell: Makefile linker.ld build/shell.c.o $(LIBC_OBJECT_FILES)
+build/clear: Makefile linker.ld build/clear.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"
-	$(LD) build/shell.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
+	$(LD) build/clear.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
 
-build/loop: Makefile linker.ld build/loop.c.o $(LIBC_OBJECT_FILES)
+build/diff: Makefile linker.ld build/diff.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"
-	$(LD) build/loop.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
+	$(LD) build/diff.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
 
 build/echo: Makefile linker.ld build/echo.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"
@@ -130,13 +130,25 @@ build/fault: Makefile linker.ld build/fault.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"
 	$(LD) build/fault.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
 
-build/clear: Makefile linker.ld build/clear.c.o $(LIBC_OBJECT_FILES)
+build/hd: Makefile linker.ld build/hd.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"
-	$(LD) build/clear.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
+	$(LD) build/hd.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
 
-build/touch: Makefile linker.ld build/touch.c.o $(LIBC_OBJECT_FILES)
+build/increment: Makefile linker.ld build/increment.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"
-	$(LD) build/touch.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
+	$(LD) build/increment.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
+
+build/init: Makefile linker.ld build/init.c.o $(LIBC_OBJECT_FILES)
+	mkdir -p "$$(dirname $@)"
+	$(LD) build/init.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
+
+build/kill: Makefile linker.ld build/kill.c.o $(LIBC_OBJECT_FILES)
+	mkdir -p "$$(dirname $@)"
+	$(LD) build/kill.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
+
+build/loop: Makefile linker.ld build/loop.c.o $(LIBC_OBJECT_FILES)
+	mkdir -p "$$(dirname $@)"
+	$(LD) build/loop.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
 
 build/ls: Makefile linker.ld build/ls.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"
@@ -146,45 +158,33 @@ build/mkdir: Makefile linker.ld build/mkdir.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"
 	$(LD) build/mkdir.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
 
-build/increment: Makefile linker.ld build/increment.c.o $(LIBC_OBJECT_FILES)
+build/mount: Makefile linker.ld build/mount.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"
-	$(LD) build/increment.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
-
-build/hd: Makefile linker.ld build/hd.c.o $(LIBC_OBJECT_FILES)
-	mkdir -p "$$(dirname $@)"
-	$(LD) build/hd.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
-
-build/truncate: Makefile linker.ld build/truncate.c.o $(LIBC_OBJECT_FILES)
-	mkdir -p "$$(dirname $@)"
-	$(LD) build/truncate.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
-
-build/cat: Makefile linker.ld build/cat.c.o $(LIBC_OBJECT_FILES)
-	mkdir -p "$$(dirname $@)"
-	$(LD) build/cat.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
-
-build/test.sh: src/test.sh
-	mkdir -p "$$(dirname $@)"
-	cp src/test.sh build/test.sh
-
-build/diff: Makefile linker.ld build/diff.c.o $(LIBC_OBJECT_FILES)
-	mkdir -p "$$(dirname $@)"
-	$(LD) build/diff.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
+	$(LD) build/mount.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
 
 build/ps: Makefile linker.ld build/ps.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"
 	$(LD) build/ps.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
 
-build/kill: Makefile linker.ld build/kill.c.o $(LIBC_OBJECT_FILES)
-	mkdir -p "$$(dirname $@)"
-	$(LD) build/kill.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
-
 build/sleep: Makefile linker.ld build/sleep.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"
 	$(LD) build/sleep.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
 
-build/mount: Makefile linker.ld build/mount.c.o $(LIBC_OBJECT_FILES)
+build/shell: Makefile linker.ld build/shell.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"
-	$(LD) build/mount.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
+	$(LD) build/shell.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
+
+build/test.sh: src/test.sh
+	mkdir -p "$$(dirname $@)"
+	cp src/test.sh build/test.sh
+
+build/touch: Makefile linker.ld build/touch.c.o $(LIBC_OBJECT_FILES)
+	mkdir -p "$$(dirname $@)"
+	$(LD) build/touch.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
+
+build/truncate: Makefile linker.ld build/truncate.c.o $(LIBC_OBJECT_FILES)
+	mkdir -p "$$(dirname $@)"
+	$(LD) build/truncate.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
 
 # Compilation rules for *.s files.
 build/%.s.o: src/%.s Makefile
