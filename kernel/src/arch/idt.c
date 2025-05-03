@@ -100,7 +100,7 @@ uint64_t hw_interrupt_handler(
         }
     } else if (interrupt_line == 0x1) {
         // Keyboard interrupt
-        keyboard_rb_fill();
+        service_keyboard_interrupt();
         pic_send_eoi(interrupt_line);
     } else if (interrupt_line == 0x9 || interrupt_line == 0xA || interrupt_line == 0xB) {
         // Hardware interrupt

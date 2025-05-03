@@ -1,3 +1,4 @@
+// Driver for TTY pseudodevices
 #include <stdbool.h>
 #include "arch/asm.h"
 #include "drivers/device-numbers.h"
@@ -62,6 +63,7 @@ void vt_device_init(
     init_wq(&vt->input_wq);
 }
 
+// Called in interrupt context
 void set_active_vt(struct vt_device *vt) {
     active_vt_device = vt;
     memset(active_vt_device->repaint_flags, 0xFF, VT_MAX_WIDTH * VT_MAX_HEIGHT / 8 + 1);

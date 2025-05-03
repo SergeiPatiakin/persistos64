@@ -1,3 +1,4 @@
+// Driver for a PC keyboard
 #include <stdint.h>
 #include <stdbool.h>
 #include "keyboard.h"
@@ -207,8 +208,8 @@ struct keyboard_event keymap_shift[128] = {
 /* The modifier keys currently pressed */
 static uint8_t depressed_mod_keys = 0;
 
-// This function can be called in interrupt context
-void keyboard_rb_fill() {
+// Called in interrupt context
+void service_keyboard_interrupt() {
     bool has_more_keys;
     do {
         uint8_t scancode = inb(0x60);

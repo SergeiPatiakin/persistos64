@@ -10,7 +10,6 @@
 #include "drivers/nvme.h"
 #include "drivers/tty.h"
 #include "drivers/zero.h"
-#include "fs/elf.h"
 #include "fs/tar.h"
 #include "fs/ramfs.h"
 #include "fs/sysfs.h"

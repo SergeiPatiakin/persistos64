@@ -19,6 +19,6 @@ struct keyboard_event {
     uint8_t scancode;
 };
 
-void keyboard_rb_fill();
+void service_keyboard_interrupt();
 
 #endif

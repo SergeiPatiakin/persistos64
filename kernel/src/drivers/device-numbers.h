@@ -1,3 +1,4 @@
+// Defines device major numbers. Each device driver is associated with a device major number
 #ifndef DEVICE_NUMBERS_H
 #define DEVICE_NUMBERS_H
 

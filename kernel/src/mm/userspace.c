@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include "arch/asm.h"
 #include "arch/gdt.h"
-#include "fs/elf.h"
 #include "fs/tar.h"
 #include "fs/vfs.h"
 #include "lib/cstd.h"

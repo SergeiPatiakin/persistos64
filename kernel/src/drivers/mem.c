@@ -1,3 +1,5 @@
+// Driver for /dev/mem, a pseudodevice for reading the current process's memory space
+// (kernel mode and user mode)
 #include "drivers/device-numbers.h"
 #include "mem.h"
 #include "fs/vfs.h"

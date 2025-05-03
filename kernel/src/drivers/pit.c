@@ -1,3 +1,4 @@
+// Driver for programmable interrupt timer (PIT)
 #include <stdint.h>
 #include "arch/asm.h"
 #include "drivers/pit.h"
