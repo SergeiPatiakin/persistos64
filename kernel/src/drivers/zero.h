@@ -2,7 +2,7 @@
 #define ZERO_H
 #include "fs/vfs.h"
 
-extern struct file_operations zero_device_fops;
+extern struct file_operations dev_zero_fops;
 
 void dev_zero_init();
 

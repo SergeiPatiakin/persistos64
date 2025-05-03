@@ -5,6 +5,6 @@
 #define DEVICE_NVMEPART 0xA2
 #define DEVICE_TTY 0xA3
 #define DEVICE_ZERO 0xA4
-#define DEVICE_KMEM 0xA5
+#define DEVICE_MEM 0xA5
 
 #endif

@@ -3,7 +3,7 @@
 #include "fs/vfs.h"
 #include "lib/cstd.h"
 
-struct inode *mem_inode;
+struct inode *dev_mem_inode;
 
 ssize_t dev_mem_read(void *dev, uint8_t* buffer, uint64_t offset, size_t length) {
     // TODO: avoid unmapped memory
@@ -17,10 +17,10 @@ ssize_t dev_mem_write(void *dev, uint8_t* buffer, uint64_t offset, size_t length
 }
 
 void dev_mem_init() {
-    mem_inode = vfs_mknod(
+    dev_mem_inode = vfs_mknod(
         vfs_dev_dir_inode,
         u8p("mem"),
-        DEVICE_KMEM,
+        DEVICE_MEM,
         1,
         &dev_mem_fops,
         NULL // Could point to some dummy struct instead

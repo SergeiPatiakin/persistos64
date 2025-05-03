@@ -3,7 +3,7 @@
 #include "fs/vfs.h"
 #include "lib/cstd.h"
 
-struct inode *zero_inode;
+struct inode *dev_zero_inode;
 
 ssize_t dev_zero_read(void *dev, uint8_t* buffer, uint64_t offset, size_t length) {
     (void) dev;
@@ -25,17 +25,17 @@ ssize_t dev_zero_write(void *dev, uint8_t* buffer, uint64_t offset, size_t lengt
 }
 
 void dev_zero_init() {
-    zero_inode = vfs_mknod(
+    dev_zero_inode = vfs_mknod(
         vfs_dev_dir_inode,
         u8p("zero"),
         DEVICE_ZERO,
         1,
-        &zero_device_fops,
+        &dev_zero_fops,
         NULL // Could point to some dummy struct instead
     );
 }
 
-struct file_operations zero_device_fops = {
+struct file_operations dev_zero_fops = {
     .read = dev_zero_read,
     .write = dev_zero_write,
 };
