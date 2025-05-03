@@ -9,7 +9,7 @@ void main(int argc, uint8_t* argv[]) {
     uint8_t pid_buf[12];
     ssize_t bytes_read = gettasks(buf, 4096);
     if (is_error(bytes_read)) {
-        fputs(u8p("Error in gettasks\n"), stderr);
+        fputs(u8p("ps: Error in gettasks\n"), stderr);
         exit(1);
     }
     uint8_t *x = buf;

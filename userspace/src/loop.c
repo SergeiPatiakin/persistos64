@@ -5,7 +5,7 @@
 
 void main(int argc, char* argv[]) {
     if (argc < 2) {
-        fputs(u8p("Expected a loop type argument\n"), stderr);
+        fputs(u8p("loop: Expected a loop type argument\n"), stderr);
         exit(1);
     }
     if (strcmp(u8p(argv[1]), u8p("busy")) == 0) {
@@ -15,7 +15,7 @@ void main(int argc, char* argv[]) {
     } else if (strcmp(u8p(argv[1]), u8p("sleep")) == 0) {
         while (true) pause();
     } else {
-        fputs(u8p("Unknown loop type\n"), stderr);
+        fputs(u8p("loop: Unknown loop type\n"), stderr);
         exit(1);
     }
 }

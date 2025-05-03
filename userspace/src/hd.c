@@ -28,7 +28,7 @@ void main(int argc, uint8_t* argv[]) {
 
     uint64_t fd = open(argv[1], 0);
     if (is_error(fd)) {
-        fputs(u8p("Error opening\n"), stderr);
+        fputs(u8p("hd: Error opening\n"), stderr);
         exit(1);
     }
 
@@ -39,7 +39,7 @@ void main(int argc, uint8_t* argv[]) {
     while (true) {
         ssize_t bytes_read = read(fd, binary_buffer, 16);
         if (is_error(bytes_read)) {
-            fputs(u8p("Error reading\n"), stderr);
+            fputs(u8p("hd: Error reading\n"), stderr);
             exit(1);
         }
         if (bytes_read == 0) {

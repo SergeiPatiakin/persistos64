@@ -30,11 +30,11 @@ void main(int argc, uint8_t* argv[]) {
 
     ssize_t fd = open(path, 1);
     if (is_error(fd)) {
-        fputs(u8p("Error opening file\n"), stderr);
+        fputs(u8p("truncate: Error opening file\n"), stderr);
         exit(1);
     }
     if (is_error(ftruncate(fd, truncate_size))) {
-        fputs(u8p("Error truncating file\n"), stderr);
+        fputs(u8p("truncate: Error truncating file\n"), stderr);
         exit(1);
     }
     exit(0);

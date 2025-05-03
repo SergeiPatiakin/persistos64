@@ -5,7 +5,7 @@
 
 void main(int argc, char* argv[]) {
     if (argc < 2) {
-        fputs(u8p("Expected a fault type argument\n"), stderr);
+        fputs(u8p("fault: Expected a fault type argument\n"), stderr);
         exit(1);
     }
     uint64_t x = 8;
@@ -21,7 +21,7 @@ void main(int argc, char* argv[]) {
         uint64_t *bad_ptr = (uint64_t*)0x900000;
         *bad_ptr = 7;
     } else {
-        fputs(u8p("Unknown fault type. Not faulting\n"), stderr);
+        fputs(u8p("fault: Unknown fault type. Not faulting\n"), stderr);
         exit(1);
     }
 }

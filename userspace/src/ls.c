@@ -11,13 +11,13 @@ void main(int argc, char* argv[]) {
     }
     uint64_t fd = open(u8p(path), 0);
     if (is_error(fd)) {
-        fputs(u8p("Error opening\n"), stderr);
+        fputs(u8p("ls: Error opening\n"), stderr);
         exit(1);        
     }
     uint8_t buf[4096];
     ssize_t bytes_read = getdents(fd, buf, 4096);
     if (is_error(bytes_read)) {
-        fputs(u8p("Error in getdents\n"), stderr);
+        fputs(u8p("ls: Error in getdents\n"), stderr);
         exit(1);
     }
     uint8_t *x = buf;
