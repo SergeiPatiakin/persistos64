@@ -3,6 +3,7 @@
 #include <persistos.h>
 
 void main(int argc, uint8_t* argv[]) {
+    uint64_t start_offset = 0;
     uint64_t length_limit = 0;
     uint8_t *path = NULL;
     int processed_argc = 1;
@@ -21,7 +22,19 @@ void main(int argc, uint8_t* argv[]) {
             }
             uint8_t parse_result = parse_n_dec(argv[processed_argc], 100, &length_limit);
             if (parse_result != strlen(argv[processed_argc])) {
-                fputs(u8p("hd: parse error\n"), stderr);
+                fputs(u8p("hd: Parse error in length limit\n"), stderr);
+                exit(1);
+            }
+            processed_argc++;
+        } else if (strcmp(argv[processed_argc], u8p("-s")) == 0) {
+            processed_argc++;
+            if (processed_argc >= argc) {
+                fputs(u8p("hd: Expected an offset\n"), stderr);
+                exit(1);
+            }
+            uint8_t parse_result = parse_n_dec(argv[processed_argc], 100, &start_offset);
+            if (parse_result != strlen(argv[processed_argc])) {
+                fputs(u8p("hd: Parse error in offset\n"), stderr);
                 exit(1);
             }
             processed_argc++;
@@ -39,6 +52,13 @@ void main(int argc, uint8_t* argv[]) {
     if (is_error(fd)) {
         fputs(u8p("hd: Error opening\n"), stderr);
         exit(1);
+    }
+
+    if (start_offset > 0) {
+        if (is_error(lseek(fd, start_offset, 0))) {
+            fputs(u8p("hd: Error seeking\n"), stderr);
+            exit(1);
+        }
     }
 
     uint8_t binary_buffer[16];
