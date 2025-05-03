@@ -46,7 +46,10 @@ void main(int argc, uint8_t* argv[]) {
     uint32_t file_offset = 0;
     
     while (true) {
-        ssize_t bytes_read = read(fd, binary_buffer, 16);
+        ssize_t bytes_to_read = (length_limit > 0 && file_offset + 16 > length_limit)
+            ? length_limit - file_offset
+            : 16;
+        ssize_t bytes_read = read(fd, binary_buffer, bytes_to_read);
         if (is_error(bytes_read)) {
             fputs(u8p("hd: Error reading\n"), stderr);
             exit(1);
