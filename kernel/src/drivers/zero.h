@@ -4,6 +4,6 @@
 
 extern struct file_operations zero_device_fops;
 
-void zero_init();
+void dev_zero_init();
 
 #endif

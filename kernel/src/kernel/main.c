@@ -6,6 +6,7 @@
 #include "arch/idt.h"
 #include "drivers/font.h"
 #include "drivers/pci.h"
+#include "drivers/mem.h"
 #include "drivers/nvme.h"
 #include "drivers/tty.h"
 #include "drivers/zero.h"
@@ -50,7 +51,8 @@ void kmain(void) {
     sysfs_init();
     exfat_init();
     terminal_init_2();
-    zero_init();
+    dev_zero_init();
+    dev_mem_init();
     pci_probe();
     userspace_init();
 

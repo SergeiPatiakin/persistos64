@@ -5,7 +5,7 @@
 
 struct inode *zero_inode;
 
-ssize_t devzero_read(void *dev, uint8_t* buffer, uint64_t offset, size_t length) {
+ssize_t dev_zero_read(void *dev, uint8_t* buffer, uint64_t offset, size_t length) {
     (void) dev;
     (void) buffer;
     (void) offset;
@@ -15,7 +15,7 @@ ssize_t devzero_read(void *dev, uint8_t* buffer, uint64_t offset, size_t length)
     return length;
 }
 
-ssize_t devzero_write(void *dev, uint8_t* buffer, uint64_t offset, size_t length) {
+ssize_t dev_zero_write(void *dev, uint8_t* buffer, uint64_t offset, size_t length) {
     (void) dev;
     (void) buffer;
     (void) offset;
@@ -24,7 +24,7 @@ ssize_t devzero_write(void *dev, uint8_t* buffer, uint64_t offset, size_t length
     return length;
 }
 
-void zero_init() {
+void dev_zero_init() {
     zero_inode = vfs_mknod(
         vfs_dev_dir_inode,
         u8p("zero"),
@@ -36,6 +36,6 @@ void zero_init() {
 }
 
 struct file_operations zero_device_fops = {
-    .read = devzero_read,
-    .write = devzero_write,
+    .read = dev_zero_read,
+    .write = dev_zero_write,
 };
