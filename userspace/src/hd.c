@@ -3,30 +3,39 @@
 #include <persistos.h>
 
 void main(int argc, uint8_t* argv[]) {
-    if (argc < 2) {
-        fputs(u8p("hd: Expected a filepath argument\n"), stderr);
-        exit(1);
-    }
-    
     uint64_t length_limit = 0;
-    if (argc > 2) {
-        if (strcmp(argv[2], u8p("-n")) == 0) {
-            if (argc < 4) {
+    uint8_t *path = NULL;
+    int processed_argc = 1;
+    while (true) {
+        if (processed_argc >= argc) {
+            if (path == NULL) {
+                fputs(u8p("hd: Expected a filepath argument\n"), stderr);
+                exit(1);
+            }
+            break;
+        } else if (strcmp(argv[processed_argc], u8p("-n")) == 0) {
+            processed_argc++;
+            if (processed_argc >= argc) {
                 fputs(u8p("hd: Expected a length limit\n"), stderr);
                 exit(1);
             }
-            uint8_t parse_result = parse_n_dec(argv[3], 100, &length_limit);
-            if (parse_result != strlen(argv[3])) {
+            uint8_t parse_result = parse_n_dec(argv[processed_argc], 100, &length_limit);
+            if (parse_result != strlen(argv[processed_argc])) {
                 fputs(u8p("hd: parse error\n"), stderr);
                 exit(1);
             }
+            processed_argc++;
         } else {
-            fputs(u8p("hd: Unexpected argument\n"), stderr);
-            exit(1);
+            if (path != NULL) {
+                fputs(u8p("hd: Only one path can be specified\n"), stderr);
+                exit(1);
+            }
+            path = argv[processed_argc];
+            processed_argc++;
         }
     }
 
-    uint64_t fd = open(argv[1], 0);
+    uint64_t fd = open(path, 0);
     if (is_error(fd)) {
         fputs(u8p("hd: Error opening\n"), stderr);
         exit(1);
