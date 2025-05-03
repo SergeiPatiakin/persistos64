@@ -39,10 +39,12 @@ struct vt_device {
 extern struct vt_device tty1;
 extern struct vt_device tty2;
 extern struct vt_device tty3;
+extern struct vt_device tty4;
 extern struct vt_device *active_vt_device;
 extern struct inode *tty1_inode;
 extern struct inode *tty2_inode;
 extern struct inode *tty3_inode;
+extern struct inode *tty4_inode;
 
 extern struct file_operations tty_device_fops;
 

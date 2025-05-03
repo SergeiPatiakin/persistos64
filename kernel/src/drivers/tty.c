@@ -14,17 +14,29 @@
 struct vt_device tty1;
 struct vt_device tty2;
 struct vt_device tty3;
+struct vt_device tty4;
 struct vt_device *active_vt_device;
 struct inode *tty1_inode;
 struct inode *tty2_inode;
 struct inode *tty3_inode;
+struct inode *tty4_inode;
 
 uint32_t vt_background_color(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t device_number) {
+    if (device_number == 4) {
+        return 0x0000ff;
+    }
     uint32_t red = (device_number == 1 ? 60 : 0) + (uint32_t)x * 128 / width;
     uint32_t green = (device_number == 2 ? 60 : 0);
     uint32_t blue = (device_number == 3 ? 60 : 0) + (uint32_t)y * 128 / height;
     uint32_t color = (red << 16) + (green << 8) + blue;
     return color;
+}
+
+uint32_t vt_foreground_color(uint16_t device_number) {
+    if (device_number == 4) {
+        return 0xffffff;
+    }
+    return 0x00ff00;
 }
 
 uint32_t desktop_color(uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
@@ -87,6 +99,7 @@ void terminal_init_1() {
     vt_device_init(&tty1, framebuffer, 1);
     vt_device_init(&tty2, framebuffer, 2);
     vt_device_init(&tty3, framebuffer, 3);
+    vt_device_init(&tty4, framebuffer, 4);
     set_active_vt(&tty1);
 }
 
@@ -115,6 +128,14 @@ void terminal_init_2() {
         &tty_device_fops,
         &tty3
     );
+    tty4_inode = vfs_mknod(
+        vfs_dev_dir_inode,
+        u8p("tty4"),
+        DEVICE_TTY,
+        tty4.device_number,
+        &tty_device_fops,
+        &tty4
+    );
 }
 
 void vt_set_char(
@@ -141,8 +162,6 @@ void vt_set_cursor(
     vt_device->repaint_flags[new_terminal_buffer_index >> 3] |= (1 << (new_terminal_buffer_index % 8));
 }
 
-#define VT_TEXT_COLOR 0x00ff00
-
 void vt_repaint_char(
     struct vt_device *vt_device,
     uint16_t row,
@@ -164,7 +183,7 @@ void vt_repaint_char(
             uint16_t pixel_x = 16 * column + j;
             uint16_t pixel_y = 16 * row + i;
             uint32_t color = ((b >> (7 - j)) & 0x1)
-                ? VT_TEXT_COLOR
+                ? vt_foreground_color(vt_device->device_number)
                 : vt_background_color(pixel_x, pixel_y, vt_device->framebuffer->width, vt_device->framebuffer->height, vt_device->device_number);
             // Override with cursor pixel if applicable
             if (
@@ -172,7 +191,7 @@ void vt_repaint_char(
                 column == vt_device->cursor_column &&
                 (i == 0 || i == 15 || j == 0)
             ) {
-                color = VT_TEXT_COLOR;
+                color = vt_foreground_color(vt_device->device_number);
             }
             // Write pixel
             fb_ptr[pixel_y * fb_dword_pitch + pixel_x] = color;
@@ -183,7 +202,7 @@ void vt_repaint_char(
             uint16_t pixel_x = 16 * column + j + 8;
             uint16_t pixel_y = 16 * row + i;
             uint32_t color = ((b >> (7 - j)) & 0x1)
-                ? VT_TEXT_COLOR
+                ? vt_foreground_color(vt_device->device_number)
                 : vt_background_color(pixel_x, pixel_y, vt_device->framebuffer->width, vt_device->framebuffer->height, vt_device->device_number);
             // Override with cursor pixel if applicable
             if (
@@ -191,7 +210,7 @@ void vt_repaint_char(
                 column == vt_device->cursor_column &&
                 (i == 0 || i == 15 || j == 7)
             ) {
-                color = VT_TEXT_COLOR;
+                color = vt_foreground_color(vt_device->device_number);
             }
             // Write pixel
             fb_ptr[pixel_y * fb_dword_pitch + pixel_x] = color;
@@ -418,11 +437,12 @@ void vt_update_input(struct vt_device *vt_device, struct keyboard_event keyboard
 
 // TODO: go through a ring buffer to allow use in interrupt context
 void printk(uint8_t* data) {
-    vt_write(&tty1, data, 0 /* dummy */, strlen(data));
+    vt_write(&tty4, data, 0 /* dummy */, strlen(data));
 }
 
 void panic(uint8_t *message) {
-    printk(message);
+    vt_write(&tty4, message, 0 /* dummy */, strlen(message));
+    set_active_vt(&tty4);
     halt_forever();
 }
 

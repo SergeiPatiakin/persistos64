@@ -8,6 +8,7 @@
 #include "drivers/tty.h"
 #include "kernel/scheduler.h"
 #include "kernel/syscall.h"
+#include "mm/page.h"
 
 #define KERNEL_CODE_GDT_ENTRY_IDX 5 // Based on Limine boot protocol
 
@@ -70,6 +71,9 @@ void cpu_exception_handler(
         printk(access_address_buf);
         printk(u8p(". The memory could not be "));
         printk(error_code & 0x2 ? u8p("written.") : u8p("read."));
+        if (fault_rip > UPPER_HALF_START) {
+            panic("Fault in upper half\n");
+        }
         printk(u8p("\n"));
 
         make_zombie(current_task_ts, 1); // TODO: better exit code

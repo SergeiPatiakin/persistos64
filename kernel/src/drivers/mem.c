@@ -8,13 +8,15 @@
 struct inode *dev_mem_inode;
 
 ssize_t dev_mem_read(void *dev, uint8_t* buffer, uint64_t offset, size_t length) {
+    (void) dev;
     // TODO: avoid unmapped memory
-    memcpy(buffer, offset, length);
+    memcpy(buffer, (void*)offset, length);
     return length;
 }
 
 ssize_t dev_mem_write(void *dev, uint8_t* buffer, uint64_t offset, size_t length) {
-    memcpy(offset, buffer, length);
+    (void) dev;
+    memcpy((void*)offset, buffer, length);
     return length;
 }
 

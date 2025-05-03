@@ -253,6 +253,11 @@ void service_keyboard_interrupt() {
                 set_active_vt(&tty3);
                 break;
             }
+            if (scancode == 0x05 && (depressed_mod_keys & MOD_CTRL)) {
+                // Ctrl + 4 -> switch to tty4
+                set_active_vt(&tty4);
+                break;
+            }
             struct keyboard_event event = (depressed_mod_keys & MOD_SHIFT) ? keymap_shift[scancode] : keymap_no_modifiers[scancode];
             event.scancode = scancode;
             if (event.symbol == 0) {

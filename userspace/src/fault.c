@@ -14,10 +14,10 @@ void main(int argc, uint8_t* argv[]) {
         x /= y;
     } else if (strcmp(argv[1], u8p("priv-instr")) == 0) {
         asm("cli");
-    } else if (strcmp(argv[1], u8p("bad-mem-read")) == 0) {
+    } else if (strcmp(argv[1], u8p("bad-read")) == 0) {
         uint64_t *bad_ptr = (uint64_t*)0x900000;
         puts(u8p(*bad_ptr));
-    } else if (strcmp(argv[1], u8p("bad-mem-write")) == 0) {
+    } else if (strcmp(argv[1], u8p("bad-write")) == 0) {
         uint64_t *bad_ptr = (uint64_t*)0x900000;
         *bad_ptr = 7;
     } else {
