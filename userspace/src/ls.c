@@ -2,14 +2,14 @@
 #include "cstd.h"
 #include <persistos.h>
 
-void main(int argc, char* argv[]) {
-    char *path;
+void main(int argc, uint8_t* argv[]) {
+    uint8_t *path;
     if (argc < 2) {
-        path = "/";
+        path = u8p("/");
     } else {
         path = argv[1];
     }
-    uint64_t fd = open(u8p(path), 0);
+    uint64_t fd = open(path, 0);
     if (is_error(fd)) {
         fputs(u8p("ls: Error opening\n"), stderr);
         exit(1);        

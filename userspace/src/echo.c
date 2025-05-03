@@ -3,15 +3,15 @@
 #include "cstd.h"
 #include <persistos.h>
 
-void main(int argc, char* argv[]) {
+void main(int argc, uint8_t* argv[]) {
     bool trailing_newline = true;
     for (int i = 1; i < argc; i++) {
-        if (i == 1 && strcmp(u8p(argv[i]), u8p("-n")) == 0) {
+        if (i == 1 && strcmp(argv[i], u8p("-n")) == 0) {
             // Handle -n argument
             trailing_newline = false;
             continue;
         }
-        puts(u8p(argv[i]));
+        puts(argv[i]);
         if (i < argc - 1) {
             puts(u8p(" "));
         }

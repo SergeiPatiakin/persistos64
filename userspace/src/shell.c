@@ -456,7 +456,7 @@ void rewrite_command_line(
     }
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, uint8_t* argv[]) {
     bool interactive_mode = argc < 2;
     if (interactive_mode) {
         uint16_t cursor_end_offset = 0;
@@ -552,7 +552,7 @@ int main(int argc, char* argv[]) {
     } else {
         size_t file_offset = 0;
         uint8_t script_buffer[SCRIPT_BUFFER_LENGTH];
-        ssize_t fd = open(u8p(argv[1]), 0);
+        ssize_t fd = open(argv[1], 0);
         if (is_error(fd)) {
             fputs(u8p("shell: could not open script\n"), stderr);
             exit(1);
