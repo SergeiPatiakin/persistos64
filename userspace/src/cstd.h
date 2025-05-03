@@ -21,6 +21,7 @@ uint8_t* strcpy(uint8_t* dest, const uint8_t* src);
 
 // Parsing functions
 uint8_t parse_oct(uint8_t *str, uint64_t *result);
+uint8_t parse_hex(uint8_t *str, uint64_t *result);
 uint8_t parse_n_dec(uint8_t *str, uint32_t n, uint64_t *result);
 
 #define ASSERT_CONCAT_(a, b) a##b

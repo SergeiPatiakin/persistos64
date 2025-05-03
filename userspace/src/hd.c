@@ -3,8 +3,8 @@
 #include <persistos.h>
 
 void main(int argc, uint8_t* argv[]) {
-    uint64_t start_offset = 0;
-    uint64_t length_limit = 0;
+    uint64_t offset_arg = 0;
+    uint64_t count_arg = 0;
     uint8_t *path = NULL;
     int processed_argc = 1;
     while (true) {
@@ -20,7 +20,7 @@ void main(int argc, uint8_t* argv[]) {
                 fputs(u8p("hd: Expected a length limit\n"), stderr);
                 exit(1);
             }
-            uint8_t parse_result = parse_n_dec(argv[processed_argc], 100, &length_limit);
+            uint8_t parse_result = parse_n_dec(argv[processed_argc], 100, &count_arg);
             if (parse_result != strlen(argv[processed_argc])) {
                 fputs(u8p("hd: Parse error in length limit\n"), stderr);
                 exit(1);
@@ -32,10 +32,18 @@ void main(int argc, uint8_t* argv[]) {
                 fputs(u8p("hd: Expected an offset\n"), stderr);
                 exit(1);
             }
-            uint8_t parse_result = parse_n_dec(argv[processed_argc], 100, &start_offset);
-            if (parse_result != strlen(argv[processed_argc])) {
-                fputs(u8p("hd: Parse error in offset\n"), stderr);
-                exit(1);
+            if (argv[processed_argc][0] == '0' && argv[processed_argc][1] == 'x') {
+                uint8_t parse_result = parse_hex(argv[processed_argc] + 2, &offset_arg);
+                if (parse_result != strlen(argv[processed_argc] + 2)) {
+                    fputs(u8p("hd: Parse error in hex offset\n"), stderr);
+                    exit(1);
+                }
+            } else {
+                uint8_t parse_result = parse_n_dec(argv[processed_argc], 100, &offset_arg);
+                if (parse_result != strlen(argv[processed_argc])) {
+                    fputs(u8p("hd: Parse error in decimal offset\n"), stderr);
+                    exit(1);
+                }
             }
             processed_argc++;
         } else {
@@ -54,8 +62,8 @@ void main(int argc, uint8_t* argv[]) {
         exit(1);
     }
 
-    if (start_offset > 0) {
-        if (is_error(lseek(fd, start_offset, 0))) {
+    if (offset_arg > 0) {
+        if (is_error(lseek(fd, offset_arg, 0))) {
             fputs(u8p("hd: Error seeking\n"), stderr);
             exit(1);
         }
@@ -63,48 +71,48 @@ void main(int argc, uint8_t* argv[]) {
 
     uint8_t binary_buffer[16];
     uint8_t text_buffer[38];
-    uint32_t file_offset = 0;
+    uint32_t file_bytes_read = 0;
     
     while (true) {
-        ssize_t bytes_to_read = (length_limit > 0 && file_offset + 16 > length_limit)
-            ? length_limit - file_offset
+        ssize_t bytes_to_read = (count_arg > 0 && file_bytes_read + 16 > count_arg)
+            ? count_arg - file_bytes_read
             : 16;
-        ssize_t bytes_read = read(fd, binary_buffer, bytes_to_read);
-        if (is_error(bytes_read)) {
+        ssize_t line_bytes_read = read(fd, binary_buffer, bytes_to_read);
+        if (is_error(line_bytes_read)) {
             fputs(u8p("hd: Error reading\n"), stderr);
             exit(1);
         }
-        if (bytes_read == 0) {
+        if (line_bytes_read == 0) {
             break;
         }
 
         memset(&text_buffer, 0, 38);
-        sprintf_uint32(file_offset, text_buffer);
+        sprintf_uint32(file_bytes_read + offset_arg, text_buffer);
         puts(text_buffer);
         puts(u8p(":"));
 
         memset(&text_buffer, 0, 38);
         for (int i = 0; i < 4; i++) {
-            if (bytes_read >= 4*i + 1) {
+            if (line_bytes_read >= 4*i + 1) {
                 text_buffer[9*i] = ' ';
                 sprintf_uint8(binary_buffer[4*i], &text_buffer[9*i + 1]);
             }
-            if (bytes_read >= 4*i + 2) sprintf_uint8(binary_buffer[4*i + 1], &text_buffer[9*i + 3]);
-            if (bytes_read >= 4*i + 3) sprintf_uint8(binary_buffer[4*i + 2], &text_buffer[9*i + 5]);
-            if (bytes_read >= 4*i + 4) sprintf_uint8(binary_buffer[4*i + 3], &text_buffer[9*i + 7]);
+            if (line_bytes_read >= 4*i + 2) sprintf_uint8(binary_buffer[4*i + 1], &text_buffer[9*i + 3]);
+            if (line_bytes_read >= 4*i + 3) sprintf_uint8(binary_buffer[4*i + 2], &text_buffer[9*i + 5]);
+            if (line_bytes_read >= 4*i + 4) sprintf_uint8(binary_buffer[4*i + 3], &text_buffer[9*i + 7]);
         }
         puts(text_buffer);
         puts(u8p("\n"));
-        file_offset += bytes_read;
-        if (length_limit != 0 && file_offset > length_limit) {
+        file_bytes_read += line_bytes_read;
+        if (count_arg != 0 && file_bytes_read > count_arg) {
             break;
         }
     }
 
     // Print final line if file is not empty
-    if (file_offset > 0) {
+    if (file_bytes_read > 0) {
         memset(&text_buffer, 0, 38);
-        sprintf_uint32(file_offset, text_buffer);
+        sprintf_uint32(file_bytes_read + offset_arg, text_buffer);
         puts(text_buffer);
         puts(u8p(":\n"));
     }

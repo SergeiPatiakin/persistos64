@@ -224,6 +224,31 @@ uint8_t parse_oct(uint8_t *str, uint64_t *result) {
     return c - str;
 }
 
+// Returns number of character parsed
+uint8_t parse_hex(uint8_t *str, uint64_t *result) {
+    uint64_t tmp = 0;
+    uint8_t *c;
+    c = str;
+    // Push bits from high bits toward low bits
+    while (true) {
+        if (*c >= '0' && *c <= '9') {
+            tmp <<= 4;
+            tmp += (*c - '0');
+        } else if (*c >= 'A' && *c <= 'F') {
+            tmp <<= 4;
+            tmp += (*c - 'A' + 10);
+        } else if (*c >= 'a' && *c <= 'f') {
+            tmp <<= 4;
+            tmp += (*c - 'a' + 10);
+        } else {
+            break;
+        }
+        c++;
+    }
+    *result = tmp;
+    return c - str;
+}
+
 // Parse up to n characters at str. Returns number of character parsed
 uint8_t parse_n_dec(uint8_t *str, uint32_t n, uint64_t *result) {
     uint64_t tmp = 0;
@@ -232,10 +257,10 @@ uint8_t parse_n_dec(uint8_t *str, uint32_t n, uint64_t *result) {
     // Push bits from high bits toward low bits
     while (c - str < n) {
         if (*c >= '0' && *c <= '9') {
-        tmp *= 10;
-        tmp += (*c - '0');
+            tmp *= 10;
+            tmp += (*c - '0');
         } else {
-        break;
+            break;
         }
         c++;
     }
