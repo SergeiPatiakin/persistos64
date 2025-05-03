@@ -1,3 +1,4 @@
+// Page mapping related code
 #include <stdbool.h>
 #include "map.h"
 #include "drivers/tty.h"

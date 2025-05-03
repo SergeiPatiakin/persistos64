@@ -1,3 +1,4 @@
+// Slab allocator
 #include <stdbool.h>
 #include "arch/asm.h"
 #include "mm/slab.h"

@@ -1,6 +1,6 @@
+// Code for interfacing with the bootloader
 #include "lib/limine.h"
 #include "kernel/limine-requests.h"
-
 
 // Set the base revision to 2, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.

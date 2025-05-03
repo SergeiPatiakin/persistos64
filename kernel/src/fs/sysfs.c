@@ -1,3 +1,4 @@
+// Sysfs filesystem
 #include <stdbool.h>
 #include <stddef.h>
 #include "sysfs.h"

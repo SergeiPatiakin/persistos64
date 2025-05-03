@@ -1,3 +1,4 @@
+// Code related to userspace memory maps
 #include <stdint.h>
 #include "arch/asm.h"
 #include "arch/gdt.h"

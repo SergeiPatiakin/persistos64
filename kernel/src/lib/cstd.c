@@ -1,3 +1,4 @@
+// Common C library functions
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>

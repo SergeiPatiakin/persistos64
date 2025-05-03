@@ -1,3 +1,4 @@
+// Doubly linked list
 #include "lib/list.h"
 
 void init_list(struct list_head *head) {

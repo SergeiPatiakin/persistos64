@@ -1,3 +1,4 @@
+// Synchronization helpers
 #include "arch/asm.h"
 #include "lib/sync.h"
 #include "kernel/scheduler.h"
@@ -12,10 +13,12 @@ void spinlock_release(irq_state state) {
     irq_restore(state);
 }
 
+// Initialize waitqueue
 void init_wq(struct wait_queue *wq) {
     init_list(&wq->waiters_lh);
 }
 
+// Awake waitqueue
 void awake_wq(struct wait_queue *wq) {
     struct list_head *wp;
     struct list_head w;
@@ -33,6 +36,7 @@ void awake_wq(struct wait_queue *wq) {
     }
 }
 
+// Prepare to wait on a wait queue. Caller will need to call task_yield after this function returns
 void prep_await_wq(struct wait_queue *wq) {
     list_add_tail(&current_task_ts->wait_queue_le, &wq->waiters_lh);
     current_task_ts->task_state = TS_WAITING;

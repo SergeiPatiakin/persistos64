@@ -1,3 +1,4 @@
+// Virtual filesystem (VFS) code
 #include "arch/asm.h"
 #include "drivers/tty.h"
 #include "fs/ramfs.h"

@@ -1,3 +1,5 @@
+// Code for extracting initial ramfs files from the tar file
+// embedded in the boot image
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
