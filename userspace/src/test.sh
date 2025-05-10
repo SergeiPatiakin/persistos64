@@ -1,9 +1,18 @@
 set -e
+
 echo test_mkdir_basic
 mkdir td
 
 echo test_mkdir_subdir
 mkdir td/subdir
+
+echo test_mkdir_exists
+set +e
+mkdir td/subdir 2>td/mkdir_exists.err
+assert_exit_code 1
+echo 'mkdir: Error in mkdir' > td/mkdir_exists.experr
+diff td/mkdir_exists.err td/mkdir_exists.experr
+set -e
 
 echo test_touch_basic
 touch td/touch_basic.out
