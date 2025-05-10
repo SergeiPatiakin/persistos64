@@ -64,19 +64,28 @@ bool is_ordinary_character(uint8_t c) {
 
 // redirect_operator := '<' | '>'
 struct pair *parse_redirect_operator(uint8_t *start, size_t length) {
-    if (length == 0) {
+    if (
+        length >= 1 &&
+        (strklcmp(u8p("<"), start, 1) == 0 || strklcmp(u8p(">"), start, 1) == 0)
+    ) {
+        struct pair *pair = malloc(sizeof(struct pair));
+        pair->type = PAIR_REDIRECT_OPERATOR;
+        pair->start = start;
+        pair->end = start + 1;
+        pair->first_child = NULL;
+        pair->next_sibling = NULL;
+        return pair;
+    } else if (length >= 2 && strklcmp(u8p("2>"), start, 2) == 0) {
+        struct pair *pair = malloc(sizeof(struct pair));
+        pair->type = PAIR_REDIRECT_OPERATOR;
+        pair->start = start;
+        pair->end = start + 2;
+        pair->first_child = NULL;
+        pair->next_sibling = NULL;
+        return pair;
+    } else {
         return NULL;
     }
-    if (*start != '<' && *start != '>') {
-        return NULL;
-    }
-    struct pair *pair = malloc(sizeof(struct pair));
-    pair->type = PAIR_REDIRECT_OPERATOR;
-    pair->start = start;
-    pair->end = start + 1;
-    pair->first_child = NULL;
-    pair->next_sibling = NULL;
-    return pair;
 }
 
 // unquoted_string := ordinary_char*
@@ -358,6 +367,8 @@ void exec_shell_line(uint8_t *start, size_t length) {
                 redirect_fd = 0;
             } else if (strklcmp(u8p(">"), redirect_operator->start, 1) == 0) {
                 redirect_fd = 1;
+            } else if (strklcmp(u8p("2>"), redirect_operator->start, 2) == 0) {
+                redirect_fd = 2;
             } else {
                 fputs(u8p("shell: parser assertion: unexpected redirect operator\n"), stderr);
                 exit(2);
