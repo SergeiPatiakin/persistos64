@@ -33,7 +33,7 @@ void nvmepart_probe(struct nvme_device *dev) {
     if (strncmp(disk_start_buffer + 0x200, u8p("EFI PART"), 8) != 0) {
         printk(u8p("No GPT found on nvme device 0x"));
         printk_uint8(dev - nvme_devices);
-        printk(u8p("\n"));
+        printk_str(u8p("\n"));
         return;
     }
     uint32_t num_partition_entries = *((uint32_t*)(disk_start_buffer + 0x250));

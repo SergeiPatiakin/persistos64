@@ -502,7 +502,7 @@ uint64_t handle_syscall(
         default: {
             printk(u8p("Unrecognized syscall: "));
             printk_uint64(syscall_number);
-            printk(u8p("\n"));
+            printk_str(u8p("\n"));
             return 0;
         }
     }

@@ -66,15 +66,15 @@ void cpu_exception_handler(
         sprintf_uint64(fault_rip, instruction_address_buf);
 
         printk(u8p("The instruction at 0x"));
-        printk(instruction_address_buf);
-        printk(u8p(" referenced memory at 0x"));
-        printk(access_address_buf);
-        printk(u8p(". The memory could not be "));
-        printk(error_code & 0x2 ? u8p("written.") : u8p("read."));
+        printk_str(instruction_address_buf);
+        printk_str(u8p(" referenced memory at 0x"));
+        printk_str(access_address_buf);
+        printk_str(u8p(". The memory could not be "));
+        printk_str(error_code & 0x2 ? u8p("written.") : u8p("read."));
+        printk_str(u8p("\n"));
         if (fault_rip > UPPER_HALF_START) {
-            panic("Fault in upper half\n");
+            panic(u8p("Fault in upper half\n"));
         }
-        printk(u8p("\n"));
 
         make_zombie(current_task_ts, 1); // TODO: better exit code
         task_yield();

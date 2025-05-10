@@ -56,6 +56,7 @@ ssize_t vt_read(void *dev, uint8_t *buffer, uint64_t offset, size_t length);
 void vt_update_input(struct vt_device *vt_device, struct keyboard_event keyboard_event);
 
 void printk(uint8_t* data);
+void printk_str(uint8_t* data);
 void panic(uint8_t *message);
 
 void printk_uint8(uint8_t data);

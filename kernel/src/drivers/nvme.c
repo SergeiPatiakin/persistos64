@@ -69,7 +69,7 @@ void finish_command(struct nvme_device *dev, uint16_t command_id) {
     if (command_id > NVME_MAX_COMMANDS) {
         printk(u8p("Cannot finish invalid command_id: "));
         printk_uint16(command_id);
-        printk(u8p("\n"));
+        printk_str(u8p("\n"));
     }
     irq_state state;
     spinlock_acquire(&state);
@@ -259,7 +259,7 @@ void nvme_probe_contents(struct nvme_device *dev) {
     if (identify_command_status != 0) {
         printk(u8p("Identify controller command error: "));
         printk_uint16(identify_command_status);
-        printk(u8p("\n"));
+        printk_str(u8p("\n"));
         return;
     }
 
@@ -326,7 +326,7 @@ void nvme_probe_contents(struct nvme_device *dev) {
     if (identify_ns_command_status != 0) {
         printk(u8p("Identify namespace command error: "));
         printk_uint16(identify_ns_command_status);
-        printk(u8p("\n"));
+        printk_str(u8p("\n"));
         return;
     }
     
@@ -381,7 +381,7 @@ void nvme_probe_contents(struct nvme_device *dev) {
     if (create_iocq_command_status != 0) {
         printk(u8p("Create IOCQ command error: "));
         printk_uint16(create_iocq_command_status);
-        printk(u8p("\n"));
+        printk_str(u8p("\n"));
         return;
     }
 
@@ -426,7 +426,7 @@ void nvme_probe_contents(struct nvme_device *dev) {
     if (create_iosq_command_status != 0) {
         printk(u8p("Create IOSQ command error: "));
         printk_uint16(create_iosq_command_status);
-        printk(u8p("\n"));
+        printk_str(u8p("\n"));
         return;
     }
     // Find partitions on device
@@ -545,7 +545,7 @@ void nvme_readpage(struct nvme_device *dev, uint32_t lba, void* result_page) {
     if (read_command_status != 0) {
         printk(u8p("Read command error: "));
         printk_uint16(read_command_status);
-        printk(u8p("\n"));
+        printk_str(u8p("\n"));
         return;
     }
 }
@@ -627,7 +627,7 @@ void nvme_writepage(struct nvme_device *dev, uint32_t lba, void* content_page) {
     if (write_command_status != 0) {
         printk(u8p("Write command error: "));
         printk_uint16(write_command_status);
-        printk(u8p("\n"));
+        printk_str(u8p("\n"));
         return;
     }
 }

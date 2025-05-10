@@ -31,6 +31,7 @@ void kt_hw_init_main() {
     for (int i = 0; i < num_nvme_devices; i++) {
         nvme_probe_2(&nvme_devices[i]);
     }
+    printk(u8p("Hardware initialized\n"));
     // Sleep forever
     current_task_ts->task_state = TS_WAITING;
     task_yield();
@@ -59,7 +60,7 @@ void kmain(void) {
     if (module_request.response->module_count != 1) {
         printk(u8p("Found 0x"));
         printk_uint8(module_request.response->module_count);
-        printk(u8p(" limine modules, expected 1\n"));
+        printk_str(u8p(" limine modules, expected 1\n"));
         halt_forever();
     };
 

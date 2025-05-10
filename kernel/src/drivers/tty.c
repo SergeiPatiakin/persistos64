@@ -1,6 +1,7 @@
 // Driver for TTY pseudodevices
 #include <stdbool.h>
 #include "arch/asm.h"
+#include "arch/idt.h"
 #include "drivers/device-numbers.h"
 #include "drivers/tty.h"
 #include "drivers/font.h"
@@ -437,13 +438,18 @@ void vt_update_input(struct vt_device *vt_device, struct keyboard_event keyboard
 
 // TODO: go through a ring buffer to allow use in interrupt context
 void printk(uint8_t* data) {
-    vt_write(&tty4, data, 0 /* dummy */, strlen(data));
+    uint8_t buf[11];
+    sprintf_dec(timer_ticks, buf, '0', 8);
+    vt_write(&tty4, u8p("["), 0, 1);
+    vt_write(&tty4, buf, 0, 6);
+    vt_write(&tty4, u8p("."), 0, 1);
+    vt_write(&tty4, buf + 6, 0, 2);
+    vt_write(&tty4, u8p("] "), 0, 2);
+    vt_write(&tty4, data, 0, strlen(data));
 }
 
-void panic(uint8_t *message) {
-    vt_write(&tty4, message, 0 /* dummy */, strlen(message));
-    set_active_vt(&tty4);
-    halt_forever();
+void printk_str(uint8_t* data) {
+    vt_write(&tty4, data, 0, strlen(data));
 }
 
 void printk_uint8(uint8_t data) {
@@ -468,6 +474,13 @@ void printk_uint64(uint64_t data) {
     uint8_t buffer[17];
     sprintf_uint64(data, buffer);
     vt_write(&tty1, buffer, 0 /* dummy */, 16);
+}
+
+
+void panic(uint8_t *message) {
+    printk(message);
+    set_active_vt(&tty4);
+    halt_forever();
 }
 
 struct file_operations tty_device_fops = {
