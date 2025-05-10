@@ -7,6 +7,7 @@
 #define SCRIPT_BUFFER_LENGTH 400
 uint8_t *command_prompt = u8p("# ");
 uint8_t last_exit_code = 0;
+bool exit_on_error = false;
 
 #define PAIR_OMS 0xB1
 #define PAIR_UNQUOTED_STRING 0xB2
@@ -387,7 +388,23 @@ void exec_shell_line(uint8_t *start, size_t length) {
         exit(exit_code);
     }
     uint64_t child_exit_code = 0;
-    if (strcmp(u8p("assert_exit_code"), exec_argv[0]) == 0) {
+    if (strcmp(u8p("set"), exec_argv[0]) == 0) {
+        if (num_words == 1) {
+            // Print set vars
+            if (exit_on_error) {
+                puts(u8p("-e"));
+            }
+        } else if (num_words == 2) {
+            if (strcmp(exec_argv[1], u8p("-e")) == 0) {
+                exit_on_error = true;
+            } else if (strcmp(exec_argv[1], u8p("+e")) == 0) {
+                exit_on_error = false;
+            } else {
+                fputs(u8p("shell: unknown set option\n"), stderr);
+                exit(1);
+            }
+        }
+    } else if (strcmp(u8p("assert_exit_code"), exec_argv[0]) == 0) {
         uint64_t expected_exit_code = 0;
         if (num_words > 2) {
             fputs(u8p("shell: builtin assert_exit_code can have at most one argument\n"), stderr);
@@ -440,6 +457,9 @@ void exec_shell_line(uint8_t *start, size_t length) {
     }
     free(stmt_result); // TODO: recursive free
     last_exit_code = child_exit_code;
+    if (child_exit_code && exit_on_error) {
+        exit(child_exit_code);
+    }
     return;
 }
 
