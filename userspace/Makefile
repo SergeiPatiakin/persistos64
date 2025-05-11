@@ -92,7 +92,6 @@ EXECUTABLE_FILES = \
 	ps \
 	sleep \
 	shell \
-	test.sh \
 	touch \
 	truncate
 EXECUTABLE_TARGETS = $(addprefix build/, $(EXECUTABLE_FILES))
@@ -103,7 +102,8 @@ build/initrd.bin: Makefile $(EXECUTABLE_TARGETS)
 	rm -rf build/bin
 	mkdir -p build/bin
 	cp $(EXECUTABLE_TARGETS) build/bin/
-	cd build && tar -cvf initrd.bin bin
+	cp -R test build/test
+	cd build && tar -cvf initrd.bin bin test
 
 LIBC_OBJECT_FILES = build/persistos.c.o build/persistos.s.o build/cstd.c.o
 
