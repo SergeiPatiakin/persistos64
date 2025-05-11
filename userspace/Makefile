@@ -35,8 +35,6 @@ override CFLAGS += \
     -fno-stack-check \
     -fno-lto \
     -fno-PIC \
-    -ffunction-sections \
-    -fdata-sections \
     -m64 \
     -march=x86-64 \
     -mno-80387 \
