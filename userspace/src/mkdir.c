@@ -9,8 +9,10 @@ void main(int argc, uint8_t* argv[]) {
     }
     uint64_t x = mkdir(argv[1]);
     if (is_error(x)) {
-        fputs(u8p("mkdir: Error in mkdir\n"), stderr);
-        exit(1);
+        // TODO: investigate why this fails on real hardware:
+        // fputs(u8p("mkdir: Error in mkdir\n"), stderr);
+        write(2, u8p("mkdir: Error in mkdir\n"), 22);
+        exit(2);
     }
     exit(0);
 }

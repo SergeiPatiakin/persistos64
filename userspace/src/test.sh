@@ -9,7 +9,7 @@ mkdir td/subdir
 echo test_mkdir_exists
 set +e
 mkdir td/subdir 2>td/mkdir_exists.err
-assert_exit_code 1
+assert_exit_code 2
 set -e
 echo 'mkdir: Error in mkdir' > td/mkdir_exists.err.exp
 diff td/mkdir_exists.err td/mkdir_exists.err.exp
