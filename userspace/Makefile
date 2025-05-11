@@ -46,6 +46,7 @@ override CFLAGS += \
 
 override CPPFLAGS := \
     -I src \
+	-I ../kernel/src/include \
     $(CPPFLAGS) \
     -MMD \
     -MP

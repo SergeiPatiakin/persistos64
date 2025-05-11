@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include "lib/cstd.h"
 #include "lib/list.h"
+#include "include/persistos-headers.h"
 
 #define INODE_DIRECTORY 0x61
 #define INODE_DEVICE 0x62
@@ -131,9 +132,6 @@ extern struct slab_allocator file_allocator;
 #define file_alloc() slab_alloc(&file_allocator)
 #define file_free(x) slab_free(&file_allocator, x)
 
-
-#define O_CREAT 0x1
-#define O_TRUNCATE 0x2
 
 void vfs_init();
 struct inode *vfs_mknod(

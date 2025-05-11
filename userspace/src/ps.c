@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "cstd.h"
 #include <persistos.h>
+#include <persistos-headers.h>
 
 void main(int argc, uint8_t* argv[]) {
     (void) argc;

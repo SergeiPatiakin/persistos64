@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include "cstd.h"
 #include <persistos.h>
+#include <persistos-headers.h>
 
 #define KEYBOARD_COMMAND_BUFFER_LENGTH 400
 #define SCRIPT_BUFFER_LENGTH 400

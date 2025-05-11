@@ -1,15 +1,12 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-#define TS_RUNNING 0x91
-#define TS_WAITING 0x92
-#define TS_ZOMBIE 0x93
-
 #include <stdint.h>
 #include "lib/cstd.h"
 #include "lib/list.h"
 #include "lib/sync.h"
 #include "mm/slab.h"
+#include "include/persistos-headers.h"
 
 typedef struct {
     uint32_t reserved0;
