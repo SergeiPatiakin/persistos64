@@ -10,9 +10,9 @@ echo test_mkdir_exists
 set +e
 mkdir td/subdir 2>td/mkdir_exists.err
 assert_exit_code 1
+set -e
 echo 'mkdir: Error in mkdir' > td/mkdir_exists.err.exp
 diff td/mkdir_exists.err td/mkdir_exists.err.exp
-set -e
 
 echo test_touch_basic
 touch td/touch_basic.out
@@ -20,9 +20,9 @@ echo -n > td/touch_basic.out.exp
 diff td/touch_basic.out td/touch_basic.out.exp
 
 echo test_diff_length
-set +e
 echo -n a > td/diff_a
 echo -n aa > td/diff_aa
+set +e
 diff td/diff_a td/diff_aa > td/diff_length.out
 assert_exit_code 2
 set -e
@@ -30,9 +30,9 @@ echo 'Files differ, they have different lengths' > td/diff_length.out.exp
 diff td/diff_length.out td/diff_length.out.exp
 
 echo test_diff_differs
-set +e
 echo -n a > td/diff_a
 echo -n b > td/diff_b
+set +e
 diff td/diff_a td/diff_b > td/diff_differs.out
 assert_exit_code 2
 set -e
