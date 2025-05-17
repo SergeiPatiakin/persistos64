@@ -52,6 +52,17 @@ void main() {
     puts(u8p("Persistos64 on tty3\n"));
     exec_shell();
 
+    uint64_t fd_serial0 = open(u8p("dev/serial0"), 0);
+    if (!is_error(fd_serial0)) {
+        dup2(fd_serial0, 0);
+        dup2(fd_serial0, 1);
+        dup2(fd_serial0, 2);
+        close(fd_serial0);
+
+        puts(u8p("Persistos64 on serial0\n"));
+        exec_shell();
+    }
+
     // TODO: wait for all shells
     pause();
 }

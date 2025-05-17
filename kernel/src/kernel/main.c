@@ -11,6 +11,7 @@
 #include "drivers/nvme.h"
 #include "drivers/tty.h"
 #include "drivers/zero.h"
+#include "drivers/serial.h"
 #include "fs/tar.h"
 #include "fs/ramfs.h"
 #include "fs/sysfs.h"
@@ -55,6 +56,7 @@ void kmain(void) {
     dev_zero_init();
     dev_mem_init();
     pci_probe();
+    serial_init();
     userspace_init();
 
     if (module_request.response->module_count != 1) {
