@@ -13,7 +13,7 @@ struct pci_device {
     uint8_t class_code;
     uint8_t subclass;
     uint8_t prog_if;
-
+    uint16_t command;
     
     uint64_t mmio_phys_base; // Physical
     uint32_t mmio_size;

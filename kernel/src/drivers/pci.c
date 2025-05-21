@@ -52,6 +52,7 @@ void pci_probe() {
                 uint16_t vendor_id = dword_0;
                 uint16_t device_id = dword_0 >> 16;
                 if (vendor_id != 0xFFFF) {
+                    uint32_t dword_4 = pci_config_read_dword(bus, slot, function, 4);
                     uint32_t dword_8 = pci_config_read_dword(bus, slot, function, 8);
                     uint8_t class_code = dword_8 >> 24;
                     uint8_t subclass = dword_8 >> 16;
@@ -98,6 +99,7 @@ void pci_probe() {
                     dev->class_code = class_code;
                     dev->subclass = subclass;
                     dev->prog_if = prog_if;
+                    dev->command = dword_4 & 0xFFFF;
                     
                     dev->mmio_phys_base = mmio_phys_base;
                     dev->mmio_size = mmio_size;
