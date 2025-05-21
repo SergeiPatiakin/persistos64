@@ -24,6 +24,7 @@ struct nvme_device {
     uint8_t dstrd_exponent;
     uint8_t lbads_exponent; // lbads_exponent == 9 => formatted LBA size is 512
     uint16_t metadata_size; // today this is unused
+    uint64_t cap;
     uint64_t lba_count; // NVME namespace consists of LBA 0 through LBA (lba_count-1)
 
     void *asq;

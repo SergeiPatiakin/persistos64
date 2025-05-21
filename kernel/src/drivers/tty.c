@@ -101,7 +101,7 @@ void terminal_init_1() {
     vt_device_init(&tty2, framebuffer, 2);
     vt_device_init(&tty3, framebuffer, 3);
     vt_device_init(&tty4, framebuffer, 4);
-    set_active_vt(&tty1);
+    set_active_vt(&tty4);
 }
 
 void terminal_init_2() {
@@ -455,25 +455,25 @@ void printk_str(uint8_t* data) {
 void printk_uint8(uint8_t data) {
     uint8_t buffer[3];
     sprintf_uint8(data, buffer);
-    vt_write(&tty1, buffer, 0 /* dummy */, 2);
+    vt_write(&tty4, buffer, 0 /* dummy */, 2);
 }
 
 void printk_uint16(uint16_t data) {
     uint8_t buffer[5];
     sprintf_uint16(data, buffer);
-    vt_write(&tty1, buffer, 0 /* dummy */, 4);
+    vt_write(&tty4, buffer, 0 /* dummy */, 4);
 }
 
 void printk_uint32(uint32_t data) {
     uint8_t buffer[9];
     sprintf_uint32(data, buffer);
-    vt_write(&tty1, buffer, 0 /* dummy */, 8);
+    vt_write(&tty4, buffer, 0 /* dummy */, 8);
 }
 
 void printk_uint64(uint64_t data) {
     uint8_t buffer[17];
     sprintf_uint64(data, buffer);
-    vt_write(&tty1, buffer, 0 /* dummy */, 16);
+    vt_write(&tty4, buffer, 0 /* dummy */, 16);
 }
 
 

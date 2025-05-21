@@ -83,6 +83,8 @@ void cpu_exception_handler(
     }
 }
 
+#define NVME_POLLING_DIVIDER 10
+
 uint64_t timer_ticks = 0;
 uint64_t last_switch_timer_ticks = 0;
 uint64_t hw_interrupt_handler(
@@ -99,6 +101,9 @@ uint64_t hw_interrupt_handler(
     } else if (interrupt_line == 0x0) {
         timer_ticks++;
         pic_send_eoi(interrupt_line);
+        if (timer_ticks % NVME_POLLING_DIVIDER == 0) {
+            nvme_handle_interrupt(interrupt_line);
+        }
         if (current_task_ts && last_switch_timer_ticks > 0 && last_switch_timer_ticks + 10 < timer_ticks) {
             task_yield();
         }

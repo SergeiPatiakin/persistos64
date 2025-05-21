@@ -13,7 +13,7 @@
 #include "mm/page.h"
 #include "nvme.h"
 
-#define NVME_QUEUE_SIZE 64
+#define NVME_QUEUE_SIZE 32
 #define NVME_QUEUE_SIZE_MINUS_ONE (NVME_QUEUE_SIZE - 1)
 #define NVME_IOSQ_ID 1
 #define NVME_IOCQ_ID 1
@@ -169,7 +169,9 @@ void nvme_probe_2(struct nvme_device *nvme_device) {
     *((uint32_t*)(pci_device->mmio_virt_base + 0x14)) = *((uint32_t*)(pci_device->mmio_virt_base + 0x14)) & 0xFFFFFFFE;
 
     // Wait for ready bit to become 0
-    while (*((uint32_t*)(pci_device->mmio_virt_base + 0x1C)) & 0x1);
+    while (*((uint32_t*)(pci_device->mmio_virt_base + 0x1C)) & 0x1) {
+        task_yield();
+    }
 
     // Write ASQB
     *((uint64_t*)(pci_device->mmio_virt_base + 0x28)) = (uint64_t)(admin_submission_queue - hhdm_offset);
@@ -191,12 +193,20 @@ void nvme_probe_2(struct nvme_device *nvme_device) {
     // TODO: Read CAP.DSTRD?
     // uint8_t dstrd_exponent = *((uint32_t*)(pci_device->mmio_virt_base + 0x0)) & 0xF;
 
+    uint64_t cap = *((uint64_t*)(pci_device->mmio_virt_base));
     uint32_t version = *((uint32_t*)(pci_device->mmio_virt_base + 0x8));
+    uint16_t mqes = cap & 0xFFFF;
+    if (mqes < NVME_QUEUE_SIZE_MINUS_ONE) {
+        printk("nvme: CAP.MQES is too small. cap=0x");
+        printk_uint64(cap);
+        printk_str("\n");
+    }
 
     nvme_device->pci_device = pci_device;
     nvme_device->major_version = version >> 16;
     nvme_device->minor_version = version >> 8;
     nvme_device->dstrd_exponent = 0; // TODO: read CAP.DSTRD
+    nvme_device->cap = cap;
     nvme_device->asq = admin_submission_queue;
     nvme_device->asq_tail = 0;
     nvme_device->asq_head = 0;
@@ -441,6 +451,10 @@ void nvme_handle_interrupt(uint8_t interrupt_line) {
 
     for (int i = 0; i < num_nvme_devices; i++) {
         struct nvme_device *dev = &nvme_devices[i];
+
+        if (!dev->acq) {
+            continue; // Skip interrupt handling before initialization progresses sufficiently
+        }
         // if (dev->pci_device->interrupt_line != interrupt_line) {
         //   // Interrupt couldn't have come from this device. Nothing to do
         //   continue;
