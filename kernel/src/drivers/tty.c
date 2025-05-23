@@ -403,7 +403,7 @@ void vt_update_input(struct vt_device *vt_device, struct keyboard_event keyboard
                 break;
             }
             case KBD_BACKSPACE: {
-                vt_append_input_character(vt_device, 0xFF);
+                vt_append_input_character(vt_device, 0x7F);
                 break;
             }
             case KBD_ARROW_UP: {

@@ -541,7 +541,7 @@ int main(int argc, uint8_t* argv[]) {
                 } else {
                     // Swallow random escape code
                 }
-            } else if (single_char_buffer[0] == 0xFF) {
+            } else if (single_char_buffer[0] == 0x7F) {
                 // Erase previous character if it exists
                 if (keyboard_command_length > cursor_end_offset) {
                     keyboard_command_length--;
