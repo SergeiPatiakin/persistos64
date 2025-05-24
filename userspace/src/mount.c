@@ -7,6 +7,9 @@ void main(int argc, uint8_t* argv[]) {
         fputs(u8p("mount: expected three arguments\n"), stderr);
         exit(1);
     }
-    mount(argv[1], argv[2], argv[3]);
+    if (is_error(mount(argv[1], argv[2], argv[3]))) {
+        fputs(u8p("mount: error in mount syscall\n"), stderr);
+        exit(1);
+    };
     exit(0);
 }
