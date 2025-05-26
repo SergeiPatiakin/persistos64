@@ -27,6 +27,11 @@ void main(int argc, uint8_t* argv[]) {
         exit(1);
     }
     uint8_t *path = argv[processed_argc];
+    processed_argc++;
+    if (argc > processed_argc) {
+        fputs(u8p("truncate: unexpected argument\n"), stderr);
+        exit(1);
+    }
 
     ssize_t fd = open(path, 1);
     if (is_error(fd)) {

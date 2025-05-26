@@ -50,6 +50,8 @@ ssize_t exfat_mount(struct inode *device_inode, struct dentry *mountpoint_dentry
       (1 << exfat_superblock->sectors_per_cluster_exponent) *
       (exfat_superblock->first_cluster_of_root_directory - 2);
     exfat_inode->load_needed = true;
+    exfat_inode->dentry_lba = 0;
+    exfat_inode->dentry_offset = 0;
   
     struct inode *vfs_root_inode = inode_alloc();
     vfs_root_inode->type = INODE_DIRECTORY;
@@ -130,7 +132,8 @@ void exfat_load_dir_inode(struct inode *dir_inode) {
                     exfat_superblock->cluster_heap_offset +
                     (1 << exfat_superblock->sectors_per_cluster_exponent) *
                     (start_cluster_number - 2);
-        
+                ((struct exfat_inode*)(file_dentry->inode->private))->dentry_lba = dir_content_lba;
+                ((struct exfat_inode*)(file_dentry->inode->private))->dentry_offset = (void*)x - dir_content_page;
                 if (file_dentry->inode->type == INODE_REGULAR_FILE) {
                     uint32_t file_length = *((uint32_t*)(x + 0x8)); // This is really uint64_t
                     file_dentry->inode->file_length = file_length;
@@ -326,10 +329,48 @@ ssize_t exfat_write(struct file *filp, void *buffer, size_t length) {
     return total_bytes_written;
   }
 
+uint64_t exfat_clusters_needed(uint64_t file_size, struct exfat_superblock *esb) {
+    if (file_size == 0) {
+        return 0;
+    }
+    return (
+        (file_size - 1)
+        >> (esb->bytes_per_sector_exponent + esb->sectors_per_cluster_exponent)
+    ) + 1;
+}
+
 ssize_t exfat_set_size(struct file *filp, size_t size) {
     (void) filp;
     (void) size;
-    return -1;
+    struct superblock *vfs_superblock = filp->inode->superblock;
+    struct exfat_superblock *exfat_superblock = (struct exfat_superblock*)(vfs_superblock->private);
+    struct exfat_inode *exfat_inode = (struct exfat_inode*)(filp->inode->private);
+    uint64_t current_num_clusters = exfat_clusters_needed(filp->inode->file_length, exfat_superblock);
+    uint64_t new_num_clusters = exfat_clusters_needed(size, exfat_superblock);
+    if (new_num_clusters != current_num_clusters) {
+        return -1;
+    }
+    uint8_t buffer[32];
+    vfs_superblock->device_fops->read(
+        vfs_superblock->device,
+        &buffer,
+        (exfat_inode->dentry_lba << exfat_superblock->bytes_per_sector_exponent) + exfat_inode->dentry_offset,
+        32
+    );
+    if (*((uint32_t*)(buffer + 0x8)) != filp->inode->file_length) {
+        printk("exfat: file length inconsistency\n");
+        return -3;
+    }
+    *((uint32_t*)(buffer + 0x8)) = size; // really uint64_t
+    vfs_superblock->device_fops->write(
+        vfs_superblock->device,
+        &buffer,
+        (exfat_inode->dentry_lba << exfat_superblock->bytes_per_sector_exponent) + exfat_inode->dentry_offset,
+        32
+    );
+    filp->inode->file_length = size;
+
+    return 0;
 }
 
 ssize_t exfat_create_file_inode(

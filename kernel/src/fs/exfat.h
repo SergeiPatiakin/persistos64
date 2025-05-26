@@ -22,6 +22,8 @@ struct exfat_file_cluster {
 struct exfat_inode {
     uint32_t exfat_start_lba;
     bool load_needed;
+    uint64_t dentry_lba;
+    uint64_t dentry_offset;
     struct list_head file_clusters_lh; // List of content pages (for a regular file only)
 };
 
