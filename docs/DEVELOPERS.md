@@ -18,7 +18,7 @@ docker exec -it -w /code p64-builder-1 bash
 make
 ```
 
-### build Persistos64 for release
+### TODO: build Persistos64 for release
 ```bash
 docker exec -it -w /code p64-builder-1 bash
 # inside Docker
@@ -89,14 +89,18 @@ make
 
 On host:
 ```bash
-qemu-system-x86_64 -S -s -m 512 -nic user \
+qemu-system-x86_64 \
+-machine q35 \
+-m 512 \
+-nic user \
 -boot menu=on \
 -drive if=none,id=usbstick,format=raw,file=kernel/build/persistos.iso \
 -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=usbstick \
 -drive file=em/hd.img,if=none,id=nvm,format=raw \
 -device nvme,serial=deadbeef,drive=nvm \
 -bios em/OVMF.fd --no-shutdown --no-reboot -monitor stdio \
--global i8042.kbd-throttle=on
+-global i8042.kbd-throttle=on \
+-S -s
 ```
 
 ### debug Persistos64 kernel with GDB
