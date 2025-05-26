@@ -38,6 +38,12 @@ ssize_t exfat_mount(struct inode *device_inode, struct dentry *mountpoint_dentry
     exfat_superblock->first_cluster_of_root_directory = *((uint32_t*)(page0 + 0x60));
     exfat_superblock->bytes_per_sector_exponent = *((uint8_t*)(page0 + 0x6C));
     exfat_superblock->sectors_per_cluster_exponent = *((uint8_t*)(page0 + 0x6D));
+    int8_t pages_per_cluster_exponent = exfat_superblock->bytes_per_sector_exponent
+        + exfat_superblock->sectors_per_cluster_exponent
+        - 12;
+    exfat_superblock->pages_per_cluster = pages_per_cluster_exponent > 0
+        ? 1L << pages_per_cluster_exponent
+        : 1;
 
     struct superblock *vfs_superblock = kpage_alloc(1); // TODO: don't waste memory
     vfs_superblock->device_fops = fops;
@@ -82,17 +88,19 @@ void exfat_load_dir_inode(struct inode *dir_inode) {
     struct exfat_superblock *exfat_superblock = vfs_superblock->private;
     struct exfat_inode *exfat_inode = dir_inode->private;
     uint32_t dir_content_lba = exfat_inode->exfat_start_lba;
-    void *dir_content_page = kpage_alloc(1); // Freed at the end of the function
-    
+    void *cluster_buffer = kpage_alloc(exfat_superblock->pages_per_cluster); // Freed at the end of the function
+    uint64_t bytes_per_cluster = 1LL << (exfat_superblock->bytes_per_sector_exponent + exfat_superblock->sectors_per_cluster_exponent);
+
     struct dentry *file_dentry = NULL;
     uint8_t file_name_index = 0;
     while (true) { // For every directory content page
         vfs_superblock->device_fops->read(
             vfs_superblock->device,
-            dir_content_page,
-            dir_content_lba << exfat_superblock->bytes_per_sector_exponent, 4096
+            cluster_buffer,
+            dir_content_lba << exfat_superblock->bytes_per_sector_exponent,
+            bytes_per_cluster
         );
-        uint8_t *x = dir_content_page;
+        uint8_t *x = cluster_buffer;
         while (true) { // For every directory entry
             if (*x == 0x83) {
                 // Volume Label
@@ -133,7 +141,7 @@ void exfat_load_dir_inode(struct inode *dir_inode) {
                     (1 << exfat_superblock->sectors_per_cluster_exponent) *
                     (start_cluster_number - 2);
                 ((struct exfat_inode*)(file_dentry->inode->private))->dentry_lba = dir_content_lba;
-                ((struct exfat_inode*)(file_dentry->inode->private))->dentry_offset = (void*)x - dir_content_page;
+                ((struct exfat_inode*)(file_dentry->inode->private))->dentry_offset = (void*)x - cluster_buffer;
                 if (file_dentry->inode->type == INODE_REGULAR_FILE) {
                     uint32_t file_length = *((uint32_t*)(x + 0x8)); // This is really uint64_t
                     file_dentry->inode->file_length = file_length;
@@ -155,7 +163,7 @@ void exfat_load_dir_inode(struct inode *dir_inode) {
                 // Unknown entry
             }
             x += 0x20;
-            if ((void*)x >= dir_content_page + 4096) {
+            if ((void*)x >= cluster_buffer + bytes_per_cluster) {
                 // Reached end of page
                 break;
             }
@@ -203,7 +211,7 @@ void exfat_load_dir_inode(struct inode *dir_inode) {
     
     // finalize:
     exfat_inode->load_needed = false;
-    kpage_free(dir_content_page, 1);
+    kpage_free(cluster_buffer, exfat_superblock->pages_per_cluster);
 }
 
 void exfat_load_file_inode(struct inode *file_inode) {
@@ -211,8 +219,9 @@ void exfat_load_file_inode(struct inode *file_inode) {
     struct exfat_superblock *exfat_superblock = vfs_superblock->private;
     struct exfat_inode *exfat_inode = file_inode->private;
     uint32_t file_content_lba = exfat_inode->exfat_start_lba;
+    uint64_t bytes_per_cluster = 1LL << (exfat_superblock->bytes_per_sector_exponent + exfat_superblock->sectors_per_cluster_exponent);
   
-    for (uint32_t byte_offset = 0; byte_offset < file_inode->file_length; byte_offset += 4096) {
+    for (uint32_t byte_offset = 0; byte_offset < file_inode->file_length; byte_offset += bytes_per_cluster) {
         struct exfat_file_cluster *cluster = exfat_file_cluster_alloc();
         list_add_tail(&cluster->file_clusters_le, &exfat_inode->file_clusters_lh);
         cluster->byte_offset = byte_offset;
@@ -258,7 +267,11 @@ void exfat_load_file_inode(struct inode *file_inode) {
 
 ssize_t exfat_read(struct file *filp, void *buf, size_t length) {
     struct exfat_inode* exfat_inode = filp->inode->private;
-    void *content_buffer = kpage_alloc(1);
+    struct superblock *vfs_superblock = filp->inode->superblock;
+    struct exfat_superblock *exfat_superblock = vfs_superblock->private;
+    void *cluster_buffer = kpage_alloc(exfat_superblock->pages_per_cluster);
+    uint64_t bytes_per_cluster = 1LL << (exfat_superblock->bytes_per_sector_exponent + exfat_superblock->sectors_per_cluster_exponent);
+
     size_t total_bytes_read = 0;
     for (
         struct list_head *file_clusters_le = exfat_inode->file_clusters_lh.next;
@@ -269,10 +282,14 @@ ssize_t exfat_read(struct file *filp, void *buf, size_t length) {
         if (filp->offset < cluster->byte_offset) {
             continue;
         }
-        uint16_t page_offset = (filp->offset - cluster->byte_offset) % 4096; // From 0 to 4095
+        uint16_t cluster_offset = (filp->offset - cluster->byte_offset) & (bytes_per_cluster - 1); // From 0 to bytes_per_cluster
 
-        size_t bytes_to_read = (length - total_bytes_read) < (4096 - page_offset) ? (length - total_bytes_read) : (4096 - page_offset);
-        bytes_to_read = bytes_to_read < (filp->inode->file_length - filp->offset) ? bytes_to_read : (filp->inode->file_length - filp->offset);
+        size_t bytes_to_read = (length - total_bytes_read) < (bytes_per_cluster - cluster_offset)
+            ? (length - total_bytes_read)
+            : (bytes_per_cluster - cluster_offset);
+        bytes_to_read = bytes_to_read < (filp->inode->file_length - filp->offset)
+            ? bytes_to_read
+            : (filp->inode->file_length - filp->offset);
         if (bytes_to_read == 0) {
             // We can't read any more (we have hit end of file or end of output buffer)
             goto finalize;
@@ -280,17 +297,17 @@ ssize_t exfat_read(struct file *filp, void *buf, size_t length) {
 
         ssize_t bytes_read = filp->inode->superblock->device_fops->read(
             filp->inode->superblock->device,
-            content_buffer,
-            cluster->device_offset + page_offset,
+            cluster_buffer,
+            cluster->device_offset + cluster_offset,
             bytes_to_read
         );
-        memcpy(buf, content_buffer, bytes_read);
+        memcpy(buf, cluster_buffer, bytes_read);
         total_bytes_read += bytes_read;
         buf += bytes_read;
         filp->offset += bytes_read;
     }
     finalize:
-    kpage_free(content_buffer, 1);
+    kpage_free(cluster_buffer, exfat_superblock->pages_per_cluster);
     return total_bytes_read;
 }
 

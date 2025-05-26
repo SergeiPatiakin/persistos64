@@ -34,6 +34,7 @@ struct exfat_superblock {
     uint32_t first_cluster_of_root_directory;
     uint8_t bytes_per_sector_exponent;
     uint8_t sectors_per_cluster_exponent;
+    uint32_t pages_per_cluster; // For convenience
 };
 
 extern struct filesystem_ops exfat_superblock_ops;
