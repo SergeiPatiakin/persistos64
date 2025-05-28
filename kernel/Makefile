@@ -32,7 +32,6 @@ override KCFLAGS += \
     -Wextra \
     -Werror=implicit-function-declaration \
     -std=gnu11 \
-    -nostdinc \
     -ffreestanding \
     -fno-stack-protector \
     -fno-stack-check \
@@ -51,7 +50,6 @@ override KCFLAGS += \
 
 override KCPPFLAGS := \
     -I src \
-    -isystem freestnd-c-hdrs-0bsd \
     $(KCPPFLAGS) \
     -MMD \
     -MP
