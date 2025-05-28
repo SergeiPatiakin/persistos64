@@ -72,4 +72,8 @@ cat /sys/meminfo > td/sysfs_meminfo.out
 echo test_sysfs_nvme
 cat /sys/nvme > td/sysfs_nvme.out
 
+echo test_dd_basic
+dd if=test/dd_basic.txt of=td/dd_basic.out bs=2 skip=3 count=4 seek=5
+diff td/dd_basic.out test/dd_basic.out.exp
+
 echo All tests successful
