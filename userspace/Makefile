@@ -79,6 +79,7 @@ all: build/initrd.bin
 EXECUTABLE_FILES = \
 	cat \
 	clear \
+	dd \
 	diff \
 	echo \
 	fault \
@@ -116,6 +117,10 @@ build/cat: Makefile linker.ld build/cat.c.o $(LIBC_OBJECT_FILES)
 build/clear: Makefile linker.ld build/clear.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"
 	$(LD) build/clear.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
+
+build/dd: Makefile linker.ld build/dd.c.o $(LIBC_OBJECT_FILES)
+	mkdir -p "$$(dirname $@)"
+	$(LD) build/dd.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
 
 build/diff: Makefile linker.ld build/diff.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"
