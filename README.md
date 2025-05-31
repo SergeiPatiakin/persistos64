@@ -13,10 +13,10 @@ https://github.com/user-attachments/assets/dd18ae70-c1ad-4c91-aac6-fdc6e251b509
 - VT100-like video terminal
 ### Filesystem
 - Virtual filesystem
+- exfat
 - initramfs
 - sysfs
-- GUI Partition Table (GPT)
-- exFAT
+- GUID Partition Table (GPT)
 ### Processes
 - ELF64 loader
 - Round robin scheduler
