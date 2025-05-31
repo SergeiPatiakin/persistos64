@@ -9,11 +9,21 @@
 #include "mm/slab.h"
 
 struct slab_allocator exfat_inode_allocator = SLAB_OF(struct exfat_inode);
-struct slab_allocator exfat_file_cluster_allocator = SLAB_OF(struct exfat_file_cluster);
+struct slab_allocator exfat_cluster_allocator = SLAB_OF(struct exfat_cluster);
 
 void exfat_init() {
     slab_allocator_init(&exfat_inode_allocator);
-    slab_allocator_init(&exfat_file_cluster_allocator);
+    slab_allocator_init(&exfat_cluster_allocator);
+}
+
+uint64_t cluster_index_to_lba(uint32_t cluster_index, struct exfat_superblock *esb) {
+    return esb->cluster_heap_offset +
+        (1 << esb->sectors_per_cluster_exponent) *
+        (cluster_index - 2);
+}
+
+uint64_t cluster_index_to_device_offset(uint32_t cluster_index, struct exfat_superblock *esb) {
+    return cluster_index_to_lba(cluster_index, esb) << (esb->bytes_per_sector_exponent);
 }
 
 ssize_t exfat_mount(struct inode *device_inode, struct dentry *mountpoint_dentry) {
@@ -52,12 +62,12 @@ ssize_t exfat_mount(struct inode *device_inode, struct dentry *mountpoint_dentry
     vfs_superblock->private = exfat_superblock;
 
     struct exfat_inode *exfat_inode = exfat_inode_alloc();
-    exfat_inode->exfat_start_lba = exfat_superblock->cluster_heap_offset +
-      (1 << exfat_superblock->sectors_per_cluster_exponent) *
-      (exfat_superblock->first_cluster_of_root_directory - 2);
+    exfat_inode->first_cluster_index = exfat_superblock->first_cluster_of_root_directory;
     exfat_inode->load_needed = true;
-    exfat_inode->dentry_lba = 0;
-    exfat_inode->dentry_offset = 0;
+    exfat_inode->no_fat_chain = false; // TODO: can the root directory have NoFatChain? 
+    exfat_inode->dentry_cluster_index = 0; // No dentry for the root directory
+    exfat_inode->dentry_cluster_offset = 0;
+    init_list(&exfat_inode->cluster_chain_lh);
   
     struct inode *vfs_root_inode = inode_alloc();
     vfs_root_inode->type = INODE_DIRECTORY;
@@ -84,20 +94,26 @@ void exfat_lookup(struct inode *inode, struct dentry *dentry) {
 }
 
 void exfat_load_dir_inode(struct inode *dir_inode) {
+    exfat_load_cluster_chain(dir_inode);
     struct superblock *vfs_superblock = dir_inode->superblock;
     struct exfat_superblock *exfat_superblock = vfs_superblock->private;
     struct exfat_inode *exfat_inode = dir_inode->private;
-    uint32_t dir_content_lba = exfat_inode->exfat_start_lba;
     void *cluster_buffer = kpage_alloc(exfat_superblock->pages_per_cluster); // Freed at the end of the function
     uint64_t bytes_per_cluster = 1LL << (exfat_superblock->bytes_per_sector_exponent + exfat_superblock->sectors_per_cluster_exponent);
 
     struct dentry *file_dentry = NULL;
     uint8_t file_name_index = 0;
-    while (true) { // For every directory content page
+    for (
+        struct list_head *cluster_chain_le = exfat_inode->cluster_chain_lh.next;
+        cluster_chain_le != &exfat_inode->cluster_chain_lh;
+        cluster_chain_le = cluster_chain_le->next
+    ) {
+        struct exfat_cluster *cluster = (void*)cluster_chain_le - offsetof(struct exfat_cluster, cluster_chain_le);
+        uint32_t cluster_index = cluster->cluster_index;
         vfs_superblock->device_fops->read(
             vfs_superblock->device,
             cluster_buffer,
-            dir_content_lba << exfat_superblock->bytes_per_sector_exponent,
+            cluster_index_to_device_offset(cluster_index, exfat_superblock),
             bytes_per_cluster
         );
         uint8_t *x = cluster_buffer;
@@ -123,6 +139,7 @@ void exfat_load_dir_inode(struct inode *dir_inode) {
                 list_add_tail(&file_dentry->dentry_le, &dir_inode->dentry_lh);
                 
                 uint16_t file_attributes = *((uint16_t*)(x + 4));
+                init_list(&child_inode->cluster_chain_lh);
                 bool is_directory = file_attributes & (1 << 4);
                 if (is_directory) {
                     file_dentry->inode->type = INODE_DIRECTORY;
@@ -130,22 +147,24 @@ void exfat_load_dir_inode(struct inode *dir_inode) {
                 } else {
                     file_dentry->inode->type = INODE_REGULAR_FILE;
                     file_dentry->inode->file_length = 0;
-                    init_list(&child_inode->file_clusters_lh);
                 }
                 child_inode->load_needed = true;
             } else if (*x == 0xC0) {
-                // File info entry
+                // Stream Extension Entry
                 uint32_t start_cluster_number = *((uint32_t*)(x + 0x14));
-                ((struct exfat_inode*)(file_dentry->inode->private))->exfat_start_lba =
-                    exfat_superblock->cluster_heap_offset +
-                    (1 << exfat_superblock->sectors_per_cluster_exponent) *
-                    (start_cluster_number - 2);
-                ((struct exfat_inode*)(file_dentry->inode->private))->dentry_lba = dir_content_lba;
-                ((struct exfat_inode*)(file_dentry->inode->private))->dentry_offset = (void*)x - cluster_buffer;
+                ((struct exfat_inode*)(file_dentry->inode->private))->first_cluster_index = start_cluster_number;
+                ((struct exfat_inode*)(file_dentry->inode->private))->dentry_cluster_index = cluster_index;
+                ((struct exfat_inode*)(file_dentry->inode->private))->dentry_cluster_offset = (void*)x - cluster_buffer;
+                
+                uint32_t file_length = *((uint32_t*)(x + 0x8)); // This is really uint64_t
+                ((struct exfat_inode*)(file_dentry->inode->private))->size = file_length;
                 if (file_dentry->inode->type == INODE_REGULAR_FILE) {
-                    uint32_t file_length = *((uint32_t*)(x + 0x8)); // This is really uint64_t
                     file_dentry->inode->file_length = file_length;
                 }
+
+                uint8_t general_secondary_flags = *((uint8_t*)(x + 0x1));
+                bool no_fat_chain = general_secondary_flags & (1 << 1);
+                ((struct exfat_inode*)(file_dentry->inode->private))->no_fat_chain = no_fat_chain;
             } else if (*x == 0xC1) {
                 if (file_dentry == NULL) {
                     // Should never happen
@@ -172,97 +191,73 @@ void exfat_load_dir_inode(struct inode *dir_inode) {
                 break; // TODO: goto finalize;
             }
         }
-        uint32_t dir_cluster_index = (
-            (dir_content_lba - exfat_superblock->cluster_heap_offset) >>
-            exfat_superblock->sectors_per_cluster_exponent
-        ) + 2;
-    
-        uint32_t fat_entry_byte_offset = (
-            exfat_superblock->fat_offset <<
-            exfat_superblock->bytes_per_sector_exponent
-        ) + 4 * dir_cluster_index;
-
-        uint32_t fat_entry;
-        vfs_superblock->device_fops->read(
-            vfs_superblock->device,
-            u8p(&fat_entry),
-            fat_entry_byte_offset,
-            4
-        );
-    
-        if (fat_entry == 0x00000000) {
-            // error("exfat_load_dir_inode: unexpected free cluster in chain\n");
-            break;
-        } else if (fat_entry == 0x00000001) {
-            printk(u8p("exfat_load_dir_inode: unexpected cluster 0x00000001 in chain\n"));
-            break;
-        } else if (fat_entry == 0xFFFFFFFF) {
-            // End of cluster chain
-            break;
-        } else if (fat_entry == 0xFFFFFFF7) {
-            printk(u8p("exfat_load_dir_inode: bad cluster\n"));
-            break;
-        } else {
-            uint32_t new_dir_content_lba = exfat_superblock->cluster_heap_offset +
-            (1 << exfat_superblock->sectors_per_cluster_exponent) * (fat_entry - 2);
-            dir_content_lba = new_dir_content_lba;
-        }
     }
     
-    // finalize:
     exfat_inode->load_needed = false;
     kpage_free(cluster_buffer, exfat_superblock->pages_per_cluster);
 }
 
 void exfat_load_file_inode(struct inode *file_inode) {
-    struct superblock *vfs_superblock = file_inode->superblock;
-    struct exfat_superblock *exfat_superblock = vfs_superblock->private;
+    exfat_load_cluster_chain(file_inode);
     struct exfat_inode *exfat_inode = file_inode->private;
-    uint32_t file_content_lba = exfat_inode->exfat_start_lba;
-    uint64_t bytes_per_cluster = 1LL << (exfat_superblock->bytes_per_sector_exponent + exfat_superblock->sectors_per_cluster_exponent);
-  
-    for (uint32_t byte_offset = 0; byte_offset < file_inode->file_length; byte_offset += bytes_per_cluster) {
-        struct exfat_file_cluster *cluster = exfat_file_cluster_alloc();
-        list_add_tail(&cluster->file_clusters_le, &exfat_inode->file_clusters_lh);
-        cluster->byte_offset = byte_offset;
-        cluster->device_offset = (uint64_t)file_content_lba << exfat_superblock->bytes_per_sector_exponent;
-        uint32_t cluster_index = (
-            (file_content_lba - exfat_superblock->cluster_heap_offset)
-            >> exfat_superblock->sectors_per_cluster_exponent
-        ) + 2;
-    
-        uint32_t fat_entry_byte_offset = (
-            exfat_superblock->fat_offset <<
-            exfat_superblock->bytes_per_sector_exponent
-        ) + 4 * cluster_index;
+    exfat_inode->load_needed = false;
+}
 
-        uint32_t fat_entry;
-        vfs_superblock->device_fops->read(
-            vfs_superblock->device,
-            u8p(&fat_entry),
-            fat_entry_byte_offset,
-            4
-        );
+void exfat_load_cluster_chain(struct inode *inode) {
+    struct superblock *vfs_superblock = inode->superblock;
+    struct exfat_superblock *exfat_superblock = vfs_superblock->private;
+    struct exfat_inode *exfat_inode = inode->private;
+    uint32_t cluster_index = exfat_inode->first_cluster_index;
+
+    uint64_t bytes_per_cluster = 1LL << (exfat_superblock->bytes_per_sector_exponent + exfat_superblock->sectors_per_cluster_exponent);
+    bool is_root_directory = exfat_inode->first_cluster_index == exfat_superblock->first_cluster_of_root_directory;
+    for (
+        uint32_t byte_offset = 0;
+        byte_offset < exfat_inode->size
+        || is_root_directory; // We lack size info about the root dir, so just keep reading the cluster chain
+        byte_offset += bytes_per_cluster
+    ) {
+        struct exfat_cluster *cluster = exfat_cluster_alloc();
+        list_add_tail(&cluster->cluster_chain_le, &exfat_inode->cluster_chain_lh);
+        cluster->cluster_index = cluster_index;
     
-        if (fat_entry == 0x00000000) {
-            // error("exfat_load_file_inode: unexpected free cluster in chain\n");
-            break;
-        } else if (fat_entry == 0x00000001) {
-            printk(u8p("exfat_load_file_inode: unexpected cluster 0x00000001 in chain\n"));
-            break;
-        } else if (fat_entry == 0xFFFFFFFF) {
-            // End of cluster chain
-            break;
-        } else if (fat_entry == 0xFFFFFFF7) {
-            printk(u8p("exfat_load_file_inode: bad cluster\n"));
-            break;
+        if (exfat_inode->no_fat_chain) {
+            cluster_index++;
         } else {
-            uint32_t new_file_content_lba = exfat_superblock->cluster_heap_offset +
-            (1 << exfat_superblock->sectors_per_cluster_exponent) * (fat_entry - 2);
-            file_content_lba = new_file_content_lba;
+            uint32_t fat_entry_byte_offset = (
+                exfat_superblock->fat_offset <<
+                exfat_superblock->bytes_per_sector_exponent
+            ) + 4 * cluster_index;
+
+            uint32_t fat_entry;
+            ssize_t device_bytes_read = vfs_superblock->device_fops->read(
+                vfs_superblock->device,
+                u8p(&fat_entry),
+                fat_entry_byte_offset,
+                4
+            );
+            if (device_bytes_read != 4) {
+                printk("exfat: could not read FAT entry from backing device\n");
+                break;
+            }
+        
+            if (fat_entry == 0x00000000) {
+                printk("exfat: unexpected zeroed FAT entry in chain\n");
+                break;
+            } else if (fat_entry == 0x00000001) {
+                printk(u8p("exfat: unexpected cluster 0x00000001 in chain\n"));
+                break;
+            } else if (fat_entry == 0xFFFFFFFF) {
+                // End of cluster chain
+                break;
+            } else if (fat_entry == 0xFFFFFFF7) {
+                printk(u8p("exfat: bad cluster\n"));
+                break;
+            } else {
+                cluster_index = fat_entry;
+            }
         }
     }
-    exfat_inode->load_needed = false;
 }
 
 ssize_t exfat_read(struct file *filp, void *buf, size_t length) {
@@ -272,60 +267,65 @@ ssize_t exfat_read(struct file *filp, void *buf, size_t length) {
     void *cluster_buffer = kpage_alloc(exfat_superblock->pages_per_cluster);
     uint64_t bytes_per_cluster = 1LL << (exfat_superblock->bytes_per_sector_exponent + exfat_superblock->sectors_per_cluster_exponent);
 
-    size_t total_bytes_read = 0;
-    for (
-        struct list_head *file_clusters_le = exfat_inode->file_clusters_lh.next;
-        file_clusters_le != &exfat_inode->file_clusters_lh;
-        file_clusters_le = file_clusters_le->next
-    ) {
-        struct exfat_file_cluster *cluster = (void*)file_clusters_le - offsetof(struct exfat_file_cluster, file_clusters_le);
-        if (filp->offset < cluster->byte_offset) {
-            continue;
-        }
-        uint16_t cluster_offset = (filp->offset - cluster->byte_offset) & (bytes_per_cluster - 1); // From 0 to bytes_per_cluster
-
-        size_t bytes_to_read = (length - total_bytes_read) < (bytes_per_cluster - cluster_offset)
-            ? (length - total_bytes_read)
-            : (bytes_per_cluster - cluster_offset);
-        bytes_to_read = bytes_to_read < (filp->inode->file_length - filp->offset)
-            ? bytes_to_read
-            : (filp->inode->file_length - filp->offset);
-        if (bytes_to_read == 0) {
-            // We can't read any more (we have hit end of file or end of output buffer)
-            goto finalize;
-        }
-
-        ssize_t bytes_read = filp->inode->superblock->device_fops->read(
-            filp->inode->superblock->device,
-            cluster_buffer,
-            cluster->device_offset + cluster_offset,
-            bytes_to_read
-        );
-        memcpy(buf, cluster_buffer, bytes_read);
-        total_bytes_read += bytes_read;
-        buf += bytes_read;
-        filp->offset += bytes_read;
+    size_t read_start_offset = filp->offset;
+    size_t read_end_offset = (filp->offset + length < filp->inode->file_length) ? (filp->offset + length) : filp->inode->file_length;
+    if (read_end_offset == read_start_offset) {
+        return 0;
     }
-    finalize:
+
+    uint64_t cluster_start_offset = 0; // File offset of start of cluster
+    size_t bytes_read = 0;
+    for (
+        struct list_head *cluster_chain_le = exfat_inode->cluster_chain_lh.next;
+        cluster_chain_le != &exfat_inode->cluster_chain_lh &&
+        cluster_start_offset < read_end_offset;
+        cluster_chain_le = cluster_chain_le->next,
+        cluster_start_offset += bytes_per_cluster
+    ) {
+        size_t cluster_end_offset = cluster_start_offset + bytes_per_cluster;
+        
+        if (read_start_offset < cluster_end_offset) {
+            // There is some overlap between the cluster's offset range and the buffer's offset range
+            size_t copied_offset_range_start = read_start_offset > cluster_start_offset ? read_start_offset : cluster_start_offset;
+            size_t copied_offset_range_end = read_end_offset < cluster_end_offset ? read_end_offset : cluster_end_offset;
+            struct exfat_cluster *cluster = (void*)cluster_chain_le - offsetof(struct exfat_cluster, cluster_chain_le);
+
+            ssize_t chunk_bytes_read = filp->inode->superblock->device_fops->read(
+                filp->inode->superblock->device,
+                cluster_buffer,
+                cluster_index_to_device_offset(cluster->cluster_index, exfat_superblock) + (copied_offset_range_start - cluster_start_offset),
+                copied_offset_range_end - copied_offset_range_start
+            );
+            memcpy(buf, cluster_buffer, chunk_bytes_read);
+            bytes_read += chunk_bytes_read;
+        }
+    }
+    filp->offset += bytes_read;
     kpage_free(cluster_buffer, exfat_superblock->pages_per_cluster);
-    return total_bytes_read;
+    return bytes_read;
 }
 
 ssize_t exfat_write(struct file *filp, void *buffer, size_t length) {
     struct exfat_inode* exfat_inode = filp->inode->private;
+    struct superblock *vfs_superblock = filp->inode->superblock;
+    struct exfat_superblock *exfat_superblock = vfs_superblock->private;
+    uint64_t bytes_per_cluster = 1LL << (exfat_superblock->bytes_per_sector_exponent + exfat_superblock->sectors_per_cluster_exponent);
+
     size_t total_bytes_written = 0;
+    uint64_t cluster_byte_offset = 0;
     for (
-        struct list_head *file_clusters_le = exfat_inode->file_clusters_lh.next;
-        file_clusters_le != &exfat_inode->file_clusters_lh;
-        file_clusters_le = file_clusters_le->next
+        struct list_head *cluster_chain_le = exfat_inode->cluster_chain_lh.next;
+        cluster_chain_le != &exfat_inode->cluster_chain_lh;
+        cluster_chain_le = cluster_chain_le->next,
+        cluster_byte_offset += bytes_per_cluster
     ) {
-        struct exfat_file_cluster *cluster = (void*)file_clusters_le - offsetof(struct exfat_file_cluster, file_clusters_le);
-        if (filp->offset < cluster->byte_offset) {
+        struct exfat_cluster *cluster = (void*)cluster_chain_le - offsetof(struct exfat_cluster, cluster_chain_le);
+        if (filp->offset < cluster_byte_offset) {
             continue;
         }
-        uint16_t page_offset = (filp->offset - cluster->byte_offset) % 4096; // From 0 to 4095
+        uint16_t cluster_offset = (filp->offset - cluster_byte_offset) & (bytes_per_cluster - 1); // From 0 to bytes_per_cluster
     
-        size_t bytes_to_write = (length - total_bytes_written) < (4096 - page_offset) ? (length - total_bytes_written) : (4096 - page_offset);
+        size_t bytes_to_write = (length - total_bytes_written) < (bytes_per_cluster - cluster_offset) ? (length - total_bytes_written) : (bytes_per_cluster - cluster_offset);
         bytes_to_write = bytes_to_write < (filp->inode->file_length - filp->offset) ? bytes_to_write : (filp->inode->file_length - filp->offset);
         if (bytes_to_write == 0) {
             // We can't read any more (we have hit end of file or end of output buffer)
@@ -335,7 +335,7 @@ ssize_t exfat_write(struct file *filp, void *buffer, size_t length) {
         size_t bytes_written = filp->inode->superblock->device_fops->write(
             filp->inode->superblock->device,
             buffer,
-            cluster->device_offset + page_offset,
+            cluster_index_to_device_offset(cluster->cluster_index, exfat_superblock),
             bytes_to_write
         );
         total_bytes_written += bytes_written;
@@ -344,7 +344,7 @@ ssize_t exfat_write(struct file *filp, void *buffer, size_t length) {
     }
     finalize:
     return total_bytes_written;
-  }
+}
 
 uint64_t exfat_clusters_needed(uint64_t file_size, struct exfat_superblock *esb) {
     if (file_size == 0) {
@@ -371,7 +371,7 @@ ssize_t exfat_set_size(struct file *filp, size_t size) {
     vfs_superblock->device_fops->read(
         vfs_superblock->device,
         &buffer,
-        (exfat_inode->dentry_lba << exfat_superblock->bytes_per_sector_exponent) + exfat_inode->dentry_offset,
+        cluster_index_to_device_offset(exfat_inode->dentry_cluster_index, exfat_superblock) + exfat_inode->dentry_cluster_offset,
         32
     );
     if (*((uint32_t*)(buffer + 0x8)) != filp->inode->file_length) {
@@ -382,7 +382,7 @@ ssize_t exfat_set_size(struct file *filp, size_t size) {
     vfs_superblock->device_fops->write(
         vfs_superblock->device,
         &buffer,
-        (exfat_inode->dentry_lba << exfat_superblock->bytes_per_sector_exponent) + exfat_inode->dentry_offset,
+        cluster_index_to_device_offset(exfat_inode->dentry_cluster_index, exfat_superblock) + exfat_inode->dentry_cluster_offset,
         32
     );
     filp->inode->file_length = size;

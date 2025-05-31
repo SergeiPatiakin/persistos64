@@ -9,22 +9,23 @@ extern struct slab_allocator exfat_inode_allocator;
 #define exfat_inode_alloc() slab_alloc(&exfat_inode_allocator)
 #define exfat_inode_free(x) slab_free(&exfat_inode_allocator, x)
 
-extern struct slab_allocator exfat_file_cluster_allocator;
-#define exfat_file_cluster_alloc() slab_alloc(&exfat_file_cluster_allocator)
-#define exfat_file_cluster_free(x) slab_free(&exfat_file_cluster_allocator, x)
+extern struct slab_allocator exfat_cluster_allocator;
+#define exfat_cluster_alloc() slab_alloc(&exfat_cluster_allocator)
+#define exfat_cluster_free(x) slab_free(&exfat_cluster_allocator, x)
 
-struct exfat_file_cluster {
-    uint32_t byte_offset; // Byte offset from start of file
-    uint64_t device_offset; // Byte offset in backing device
-    struct list_head file_clusters_le;
+struct exfat_cluster {
+    uint32_t cluster_index;
+    struct list_head cluster_chain_le;
 };
 
 struct exfat_inode {
-    uint32_t exfat_start_lba;
+    uint32_t first_cluster_index;
     bool load_needed;
-    uint64_t dentry_lba;
-    uint64_t dentry_offset;
-    struct list_head file_clusters_lh; // List of content pages (for a regular file only)
+    bool no_fat_chain;
+    uint64_t dentry_cluster_index;
+    uint64_t dentry_cluster_offset;
+    uint64_t size;
+    struct list_head cluster_chain_lh;
 };
 
 struct exfat_superblock {
@@ -42,5 +43,6 @@ extern struct filesystem_ops exfat_superblock_ops;
 void exfat_init();
 void exfat_load_dir_inode(struct inode *dir_inode);
 void exfat_load_file_inode(struct inode *file_inode);
+void exfat_load_cluster_chain(struct inode *inode);
 
 #endif

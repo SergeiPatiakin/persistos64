@@ -88,14 +88,15 @@ ssize_t ramfs_read(struct file *filp, void *buffer, size_t length) {
         return 0;
     }
 
-    struct list_head *ramfs_clusters_le = ramfs_inode->ramfs_clusters_lh.next;
-    size_t cluster_start_offset = 0;
+    size_t cluster_start_offset = 0; // File offset of start of cluster
     size_t bytes_read = 0;
-    while (cluster_start_offset < read_end_offset) {
-        if (ramfs_clusters_le == &ramfs_inode->ramfs_clusters_lh) {
-            // No more clusters
-            break;
-        }
+    for (
+        struct list_head *ramfs_clusters_le = ramfs_inode->ramfs_clusters_lh.next;
+        ramfs_clusters_le != &ramfs_inode->ramfs_clusters_lh &&
+        cluster_start_offset < read_end_offset;
+        ramfs_clusters_le = ramfs_clusters_le->next,
+        cluster_start_offset += RAMFS_CLUSTER_CAPACITY
+    ) {
         size_t cluster_end_offset = cluster_start_offset + RAMFS_CLUSTER_CAPACITY;
         if (read_start_offset < cluster_end_offset) {
             // There is some overlap between the cluster's offset range and the buffer's offset range
@@ -113,8 +114,6 @@ ssize_t ramfs_read(struct file *filp, void *buffer, size_t length) {
             );
             bytes_read += (copied_offset_range_end - copied_offset_range_start);
         }
-        ramfs_clusters_le = ramfs_clusters_le->next;
-        cluster_start_offset += RAMFS_CLUSTER_CAPACITY;
     }
     filp->offset += bytes_read;
     return bytes_read;
@@ -135,9 +134,13 @@ ssize_t ramfs_write(struct file *filp, void *buf, size_t length) {
         ramfs_set_size(filp, write_end_offset);
     }
 
-    struct list_head *ramfs_clusters_le = ramfs_inode->ramfs_clusters_lh.next;
     size_t cluster_start_offset = 0;
-    while (cluster_start_offset < write_end_offset) {
+    for (
+        struct list_head *ramfs_clusters_le = ramfs_inode->ramfs_clusters_lh.next;
+        cluster_start_offset < write_end_offset;
+        ramfs_clusters_le = ramfs_clusters_le->next,
+        cluster_start_offset += RAMFS_CLUSTER_CAPACITY
+    ) {
         size_t cluster_end_offset = cluster_start_offset + RAMFS_CLUSTER_CAPACITY;
         if (write_start_offset < cluster_end_offset) {
             // There is some overlap between the cluster's offset range and the buffer's offset range
@@ -154,8 +157,6 @@ ssize_t ramfs_write(struct file *filp, void *buf, size_t length) {
                 copied_offset_range_end - copied_offset_range_start
             );
         }
-        ramfs_clusters_le = ramfs_clusters_le->next;
-        cluster_start_offset += RAMFS_CLUSTER_CAPACITY;
     }
     return length;
 }
