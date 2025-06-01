@@ -86,6 +86,7 @@ EXECUTABLE_FILES = \
 	hd \
 	increment \
     init \
+	iview \
 	kill \
 	loop \
 	ls \
@@ -145,6 +146,10 @@ build/increment: Makefile linker.ld build/increment.c.o $(LIBC_OBJECT_FILES)
 build/init: Makefile linker.ld build/init.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"
 	$(LD) build/init.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
+
+build/iview: Makefile linker.ld build/iview.c.o $(LIBC_OBJECT_FILES)
+	mkdir -p "$$(dirname $@)"
+	$(LD) build/iview.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
 
 build/kill: Makefile linker.ld build/kill.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"
