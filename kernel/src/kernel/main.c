@@ -5,7 +5,7 @@
 #include "arch/asm.h"
 #include "arch/gdt.h"
 #include "arch/idt.h"
-#include "drivers/font.h"
+#include "drivers/fb.h"
 #include "drivers/pci.h"
 #include "drivers/mem.h"
 #include "drivers/nvme.h"
@@ -57,6 +57,7 @@ void kmain(void) {
     dev_mem_init();
     pci_probe();
     serial_init();
+    fb_init();
     userspace_init();
 
     if (module_request.response->module_count != 1) {

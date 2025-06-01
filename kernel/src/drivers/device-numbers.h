@@ -8,5 +8,6 @@
 #define DEVICE_ZERO 0xA4
 #define DEVICE_MEM 0xA5
 #define DEVICE_SERIAL 0xA6
+#define DEVICE_FRAMEBUFFER 0xA7
 
 #endif
