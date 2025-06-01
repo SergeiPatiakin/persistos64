@@ -50,7 +50,7 @@ extern struct file_operations tty_device_fops;
 
 void terminal_init_1();
 void terminal_init_2();
-void vt_repaint_terminal(struct vt_device *vt_device);
+void fbcon_repaint_terminal(struct vt_device *vt_device);
 ssize_t vt_write(void *dev, uint8_t *buffer, uint64_t offset, size_t length);
 ssize_t vt_read(void *dev, uint8_t *buffer, uint64_t offset, size_t length);
 void vt_update_input(struct vt_device *vt_device, struct keyboard_event keyboard_event);
