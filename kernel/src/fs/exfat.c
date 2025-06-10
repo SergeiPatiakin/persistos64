@@ -260,7 +260,7 @@ void exfat_load_cluster_chain(struct inode *inode) {
     }
 }
 
-ssize_t exfat_read(struct file *filp, void *buf, size_t length) {
+ssize_t exfat_read(struct file *filp, void *buffer, size_t length) {
     struct exfat_inode* exfat_inode = filp->inode->private;
     struct superblock *vfs_superblock = filp->inode->superblock;
     struct exfat_superblock *exfat_superblock = vfs_superblock->private;
@@ -296,8 +296,9 @@ ssize_t exfat_read(struct file *filp, void *buf, size_t length) {
                 cluster_index_to_device_offset(cluster->cluster_index, exfat_superblock) + (copied_offset_range_start - cluster_start_offset),
                 copied_offset_range_end - copied_offset_range_start
             );
-            memcpy(buf, cluster_buffer, chunk_bytes_read);
+            memcpy(buffer, cluster_buffer, chunk_bytes_read);
             bytes_read += chunk_bytes_read;
+            buffer += chunk_bytes_read;
         }
     }
     filp->offset += bytes_read;
