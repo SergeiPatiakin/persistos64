@@ -88,7 +88,7 @@ void main(int argc, uint8_t* argv[]) {
                 exit(1);
             }
             if (bytes_read == 0) {
-                break;
+                exit(0);
             }
             block_bytes_read += bytes_read;
         }
