@@ -8,4 +8,10 @@
 #define TS_WAITING 0x92
 #define TS_ZOMBIE 0x93
 
+struct fb_info {
+    uint16_t fb_width;
+    uint16_t fb_height;
+    uint16_t fb_pitch;
+};
+
 #endif

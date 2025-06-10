@@ -2,6 +2,7 @@
 #include "fs/vfs.h"
 #include "drivers/device-numbers.h"
 #include "kernel/limine-requests.h"
+#include "include/persistos-headers.h"
 #include "fb.h"
 
 struct limine_framebuffer *framebuffer;
@@ -34,6 +35,14 @@ ssize_t fb_write(void *dev, uint8_t* buffer, uint64_t offset, size_t length) {
         : length;
     memcpy(framebuffer->address + offset, buffer, bytes_to_copy);
     return bytes_to_copy;
+}
+
+ssize_t fb_ioctl(void *dev, uint64_t cmd, uint64_t arg) {
+    struct fb_info *info = arg;
+    info->fb_width = framebuffer->width;
+    info->fb_height = framebuffer->height;
+    info->fb_pitch = framebuffer->pitch;
+    return 0;
 }
 
 struct file_operations fb_device_fops = {

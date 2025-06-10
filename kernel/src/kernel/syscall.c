@@ -4,6 +4,8 @@
 #include "syscall.h"
 #include "arch/asm.h"
 #include "arch/idt.h"
+#include "drivers/device-numbers.h"
+#include "drivers/fb.h"
 #include "fs/tar.h"
 #include "fs/vfs.h"
 #include "fs/exfat.h"
@@ -36,6 +38,7 @@
 #define SYSCALL_SLEEP 19
 #define SYSCALL_MOUNT 20
 #define SYSCALL_PAUSE 21
+#define SYSCALL_IOCTL 22
 
 uint64_t handle_syscall(
     uint64_t interrupt_rsp,
@@ -498,6 +501,27 @@ uint64_t handle_syscall(
             current_task_ts->task_state = TS_WAITING;
             task_yield();
             return 0;
+        }
+        case SYSCALL_IOCTL: {
+            uint64_t fd = arg3;
+            uint64_t cmd = arg4;
+            uint64_t arg = arg5;
+            
+            struct file *filp = filp_find(current_task_ts, fd);
+            if (!filp) {
+                return -1;
+            }
+            if (filp->inode->type != INODE_DEVICE) {
+                return -2;
+            }
+            switch (filp->inode->device_type) {
+                case DEVICE_FRAMEBUFFER: {
+                    return fb_ioctl(NULL, cmd, arg);
+                }
+                default: {
+                    return -3;
+                }
+            }
         }
         default: {
             printk(u8p("Unrecognized syscall: "));

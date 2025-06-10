@@ -189,3 +189,12 @@ pause:
     movq $21, %rdi
     int $0x80
     retq
+
+.global ioctl
+ioctl:
+    movq %rdx, %rcx
+    movq %rsi, %rdx
+    movq %rdi, %rsi
+    movq $22, %rdi
+    int $0x80
+    retq

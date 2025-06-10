@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "cstd.h"
 #include <persistos.h>
+#include <persistos-headers.h>
 
 struct bmp_file_header {
 	uint8_t ident[2];
@@ -56,20 +57,15 @@ void main(int argc, uint8_t* argv[]) {
         exit(1);
     }
 
-    // char buf[17];
-    // sprintf_dec(bitmap_info_buffer.width, &buf, 0, 0);
-    // puts(buf);
-    // puts("x");
-    // sprintf_dec(bitmap_info_buffer.height, &buf, 0, 0);
-    // puts(buf);
-    // puts(", bbp=");
-    // sprintf_dec(bitmap_info_buffer.bbp, &buf, 0, 0);
-    // puts(buf);
-    // puts("\n");
+    struct fb_info fb_info;
+    if (is_error(ioctl(fb_fd, 1, &fb_info))) {
+        fputs(u8p("iview: error in ioctl\n"), stderr);
+        exit(1);
+    }
 
-    size_t fb_width = 800; // 800 TODO
-    size_t fb_height = 600; // 600 TODO
-    size_t fb_pitch = 0xc80; // TODO
+    size_t fb_width = fb_info.fb_width;
+    size_t fb_height = fb_info.fb_height;
+    size_t fb_pitch = fb_info.fb_pitch;
 
     size_t width_to_display = fb_width < bitmap_info_buffer.width ? fb_width : bitmap_info_buffer.width;
     size_t height_to_display = fb_height < bitmap_info_buffer.height ? fb_height : bitmap_info_buffer.height;

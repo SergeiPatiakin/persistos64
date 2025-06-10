@@ -42,5 +42,6 @@ bool is_error(ssize_t x);
 /* 19 */ ssize_t sleep(uint64_t millis);
 /* 20 */ ssize_t mount(uint8_t *dev_name, uint8_t *dir_name, uint8_t *type);
 /* 21 */ ssize_t pause();
+/* 22 */ ssize_t ioctl(uint64_t fd, uint64_t cmd, uint64_t arg);
 
 #endif
