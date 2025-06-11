@@ -21,7 +21,7 @@ void main(int argc, uint8_t* argv[]) {
         exit(1);
     }
     binary_buf++;
-    if (is_error(lseek(fd, 0, 0))) {
+    if (is_error(lseek(fd, 0, SEEK_SET))) {
         fputs(u8p("increment: Error seeking\n"), stderr);
         exit(1);
     }

@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "cstd.h"
 #include <persistos.h>
+#include <persistos-headers.h>
 
 void main(int argc, uint8_t* argv[]) {
     uint64_t offset_arg = 0;
@@ -63,7 +64,7 @@ void main(int argc, uint8_t* argv[]) {
     }
 
     if (offset_arg > 0) {
-        if (is_error(lseek(fd, offset_arg, 0))) {
+        if (is_error(lseek(fd, offset_arg, SEEK_SET))) {
             fputs(u8p("hd: Error seeking\n"), stderr);
             exit(1);
         }

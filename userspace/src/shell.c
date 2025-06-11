@@ -613,7 +613,7 @@ int main(int argc, uint8_t* argv[]) {
             exec_shell_line(script_buffer, line_length);
             size_t rewind_bytes = bytes_read - (line_length + 1);
             size_t new_offset = file_offset - rewind_bytes;
-            lseek(fd, new_offset, 0);
+            lseek(fd, new_offset, SEEK_SET);
             file_offset = new_offset;
         }
     }

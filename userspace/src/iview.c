@@ -76,7 +76,7 @@ void main(int argc, uint8_t* argv[]) {
         lseek(
             img_fd,
             file_header_buffer.pix_array_offset + (bitmap_info_buffer.height - 1 - i) * (bitmap_info_buffer.width * 3),
-            0
+            SEEK_SET
         );
         read(img_fd, img_pixels_buffer, width_to_display * 3);
         for (int j = 0; j < width_to_display; j++) {
@@ -86,7 +86,7 @@ void main(int argc, uint8_t* argv[]) {
             fb_pixels_buffer[4 * j + 3] = 0; // Alpha
         }
         write(fb_fd, fb_pixels_buffer, width_to_display * 4);
-        lseek(fb_fd, fb_pitch * (i + 1), 0);
+        lseek(fb_fd, fb_pitch * (i + 1), SEEK_SET);
     }
     exit(0);
 }

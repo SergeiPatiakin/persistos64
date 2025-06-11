@@ -1,8 +1,12 @@
 #ifndef INCLUDE_H
 #define INCLUDE_H
 
+#include <stdint.h>
+
 #define O_CREAT 0x1
 #define O_TRUNCATE 0x2
+
+#define SEEK_SET 0x0
 
 #define TS_RUNNING 0x91
 #define TS_WAITING 0x92

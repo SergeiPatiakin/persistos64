@@ -68,13 +68,13 @@ void main(int argc, uint8_t* argv[]) {
 
     uint8_t *buffer = malloc(block_size);
     if (skip != 0) {
-        if (is_error(lseek(in_fd, block_size * skip, 0))) {
+        if (is_error(lseek(in_fd, block_size * skip, SEEK_SET))) {
             fputs(u8p("dd: error skipping\n"), stderr);
             exit(1);
         }
     }
     if (seek != 0) {
-        if (is_error(lseek(out_fd, block_size * seek, 0))) {
+        if (is_error(lseek(out_fd, block_size * seek, SEEK_SET))) {
             fputs(u8p("dd: error seeking\n"), stderr);
             exit(1);
         }

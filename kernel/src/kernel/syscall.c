@@ -385,40 +385,50 @@ uint64_t handle_syscall(
             return lookup_result.status;
         }
         case SYSCALL_LSEEK: {
-            struct file *filp = filp_find(current_task_ts, arg3);
+            uint64_t fd = arg3;
+            int64_t offset = arg4;
+            uint64_t whence = arg5;
+
+            struct file *filp = filp_find(current_task_ts, fd);
             if (!filp) {
                 return -1;
             }
             // For now, only support SEEK_SET
-            if (arg5 != 0) {
-                return -1;
+            if (whence != SEEK_SET) {
+                return -2;
             }
-            filp->offset = arg4;
+            filp->offset = offset;
             return arg4;
         }
         case SYSCALL_FTRUNCATE: {
-            struct file *filp = filp_find(current_task_ts, arg3);
+            uint64_t fd = arg3;
+            uint64_t size = arg4;
+
+            struct file *filp = filp_find(current_task_ts, fd);
             if (!filp) {
                 return -1;
             }
-            return vfs_ftruncate(filp, arg4);
+            return vfs_ftruncate(filp, size);
         }
         case SYSCALL_DUP2: {
-            struct file *old_filp = filp_find(current_task_ts, arg3);
+            uint64_t fd1 = arg3;
+            uint64_t fd2 = arg4;
+
+            struct file *old_filp = filp_find(current_task_ts, fd1);
             if (!old_filp) {
                 return -1;
             }
-            struct file *filp_to_close = filp_find(current_task_ts, arg4);
+            struct file *filp_to_close = filp_find(current_task_ts, fd2);
             if (filp_to_close) {
                 list_del(&filp_to_close->files_le);
                 file_free(filp_to_close);
             }
-            struct file *next_filp = filp_insert_point_find(current_task_ts, arg4);
+            struct file *next_filp = filp_insert_point_find(current_task_ts, fd2);
             struct list_head *next_filp_le = next_filp == NULL ?
                 &current_task_ts->files_lh :
                 &next_filp->files_le;
             struct file *new_filp = file_alloc();
-            new_filp->fd = arg4;
+            new_filp->fd = fd2;
             new_filp->inode = old_filp->inode;
             new_filp->offset = old_filp->offset;
             list_add_tail(&new_filp->files_le, next_filp_le);
