@@ -32,10 +32,10 @@ ssize_t exfat_mount(struct inode *device_inode, struct dentry *mountpoint_dentry
     if (device_inode->type != INODE_DEVICE || device_inode->device_type != DEVICE_NVMEPART) {
         return -10;
     }
-    struct file_operations *fops = device_inode->device_fops;
+    struct device_operations *ops = device_inode->device_ops;
     struct nvmepart_device *dev = device_inode->device;
     void *page0 = kpage_alloc(1);
-    fops->read(dev, page0, 0, 4096);
+    ops->read(dev, page0, 0, 4096);
     if (memcmp("EXFAT", page0 + 3, 5) != 0) {
         kpage_free(page0, 1);
         return -11;
@@ -56,7 +56,7 @@ ssize_t exfat_mount(struct inode *device_inode, struct dentry *mountpoint_dentry
         : 1;
 
     struct superblock *vfs_superblock = kpage_alloc(1); // TODO: don't waste memory
-    vfs_superblock->device_fops = fops;
+    vfs_superblock->device_ops = ops;
     vfs_superblock->device = dev;
     vfs_superblock->ops = &exfat_superblock_ops;
     vfs_superblock->private = exfat_superblock;
@@ -110,7 +110,7 @@ void exfat_load_dir_inode(struct inode *dir_inode) {
     ) {
         struct exfat_cluster *cluster = (void*)cluster_chain_le - offsetof(struct exfat_cluster, cluster_chain_le);
         uint32_t cluster_index = cluster->cluster_index;
-        vfs_superblock->device_fops->read(
+        vfs_superblock->device_ops->read(
             vfs_superblock->device,
             cluster_buffer,
             cluster_index_to_device_offset(cluster_index, exfat_superblock),
@@ -230,7 +230,7 @@ void exfat_load_cluster_chain(struct inode *inode) {
             ) + 4 * cluster_index;
 
             uint32_t fat_entry;
-            ssize_t device_bytes_read = vfs_superblock->device_fops->read(
+            ssize_t device_bytes_read = vfs_superblock->device_ops->read(
                 vfs_superblock->device,
                 u8p(&fat_entry),
                 fat_entry_byte_offset,
@@ -290,7 +290,7 @@ ssize_t exfat_read(struct file *filp, void *buffer, size_t length) {
             size_t copied_offset_range_end = read_end_offset < cluster_end_offset ? read_end_offset : cluster_end_offset;
             struct exfat_cluster *cluster = (void*)cluster_chain_le - offsetof(struct exfat_cluster, cluster_chain_le);
 
-            ssize_t chunk_bytes_read = filp->inode->superblock->device_fops->read(
+            ssize_t chunk_bytes_read = filp->inode->superblock->device_ops->read(
                 filp->inode->superblock->device,
                 cluster_buffer,
                 cluster_index_to_device_offset(cluster->cluster_index, exfat_superblock) + (copied_offset_range_start - cluster_start_offset),
@@ -333,7 +333,7 @@ ssize_t exfat_write(struct file *filp, void *buffer, size_t length) {
             goto finalize;
         }
     
-        size_t bytes_written = filp->inode->superblock->device_fops->write(
+        size_t bytes_written = filp->inode->superblock->device_ops->write(
             filp->inode->superblock->device,
             buffer,
             cluster_index_to_device_offset(cluster->cluster_index, exfat_superblock),
@@ -369,7 +369,7 @@ ssize_t exfat_set_size(struct file *filp, size_t size) {
         return -1;
     }
     uint8_t buffer[32];
-    vfs_superblock->device_fops->read(
+    vfs_superblock->device_ops->read(
         vfs_superblock->device,
         &buffer,
         cluster_index_to_device_offset(exfat_inode->dentry_cluster_index, exfat_superblock) + exfat_inode->dentry_cluster_offset,
@@ -380,7 +380,7 @@ ssize_t exfat_set_size(struct file *filp, size_t size) {
         return -3;
     }
     *((uint32_t*)(buffer + 0x8)) = size; // really uint64_t
-    vfs_superblock->device_fops->write(
+    vfs_superblock->device_ops->write(
         vfs_superblock->device,
         &buffer,
         cluster_index_to_device_offset(exfat_inode->dentry_cluster_index, exfat_superblock) + exfat_inode->dentry_cluster_offset,
@@ -419,7 +419,7 @@ ssize_t exfat_create_dev_inode(
     struct inode *parent_dir,
     uint16_t device_type,
     uint16_t device_number,
-    struct file_operations *device_fops,
+    struct device_operations *device_ops,
     void *device,
     struct inode *out_inode,
     struct dentry *out_dentry
@@ -427,7 +427,7 @@ ssize_t exfat_create_dev_inode(
     (void) parent_dir;
     (void) device_type;
     (void) device_number;
-    (void) device_fops;
+    (void) device_ops;
     (void) device;
     (void) out_inode;
     (void) out_dentry;

@@ -2,7 +2,7 @@
 #define MEM_H
 #include "fs/vfs.h"
 
-extern struct file_operations dev_mem_fops;
+extern struct device_operations mem_device_ops;
 
 void dev_mem_init();
 

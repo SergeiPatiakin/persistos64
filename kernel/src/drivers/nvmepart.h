@@ -5,7 +5,7 @@
 
 struct nvme_device;
 
-extern struct file_operations nvmepart_device_fops;
+extern struct device_operations nvmepart_device_ops;
 
 struct nvmepart_device {
     struct nvme_device *nvme_device;

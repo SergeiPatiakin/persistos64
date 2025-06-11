@@ -31,12 +31,12 @@ void dev_zero_init() {
         u8p("zero"),
         DEVICE_ZERO,
         1,
-        &dev_zero_fops,
+        &zero_device_ops,
         NULL // Could point to some dummy struct instead
     );
 }
 
-struct file_operations dev_zero_fops = {
+struct device_operations zero_device_ops = {
     .read = dev_zero_read,
     .write = dev_zero_write,
 };

@@ -92,7 +92,7 @@ void nvmepart_probe(struct nvme_device *dev) {
             name_buffer,
             DEVICE_NVMEPART,
             device_number,
-            &nvmepart_device_fops,
+            &nvmepart_device_ops,
             partition
         );
     }
@@ -118,7 +118,7 @@ ssize_t nvmepart_write(void *dev, uint8_t* buffer, uint64_t offset, size_t lengt
     return nvme_write(partition->nvme_device, buffer, nvme_device_offset, length);
 }
 
-struct file_operations nvmepart_device_fops = {
+struct device_operations nvmepart_device_ops = {
     .read = nvmepart_read,
     .write = nvmepart_write,
 };

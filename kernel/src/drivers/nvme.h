@@ -7,7 +7,7 @@ struct pci_device;
 ssize_t nvme_write(void *dev, uint8_t* buffer, uint64_t offset, size_t length);
 ssize_t nvme_read(void *dev, uint8_t* buffer, uint64_t offset, size_t length);
 
-extern struct file_operations nvme_device_fops;
+extern struct device_operations nvme_device_ops;
 
 // Maximum number of parallel commands in NVME_COMMAND_IN_FLIGHT and NVME_COMMAND_COMPLETED states
 #define NVME_MAX_COMMANDS 128

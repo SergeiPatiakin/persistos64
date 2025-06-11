@@ -33,7 +33,7 @@ int serial_init() {
         u8p("serial0"),
         DEVICE_SERIAL,
         serial0.device_number,
-        &serial_device_fops,
+        &serial_device_ops,
         &serial0
     );
     return 0;
@@ -87,7 +87,7 @@ ssize_t serial_read(void *dev, uint8_t *buffer, uint64_t offset, size_t length) 
     return 1;
 }
 
-struct file_operations serial_device_fops = {
+struct device_operations serial_device_ops = {
     .read = serial_read,
     .write = serial_write
 };

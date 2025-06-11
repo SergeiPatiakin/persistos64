@@ -106,7 +106,7 @@ void nvme_probe_1(struct pci_device *pci_device) {
         name_buffer,
         DEVICE_NVME,
         device_number,
-        &nvme_device_fops,
+        &nvme_device_ops,
         nvme_device
     );
 
@@ -682,7 +682,7 @@ ssize_t nvme_write(void *dev, uint8_t* buffer, uint64_t offset, size_t length) {
     return bytes_written;
 }
 
-struct file_operations nvme_device_fops = {
+struct device_operations nvme_device_ops = {
     .read = nvme_read,
     .write = nvme_write,
 };

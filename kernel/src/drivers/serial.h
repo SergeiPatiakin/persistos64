@@ -13,6 +13,6 @@ extern struct serial_device serial0;
 int serial_init();
 void write_serial(char a);
 char read_serial();
-extern struct file_operations serial_device_fops;
+extern struct device_operations serial_device_ops;
 
 #endif

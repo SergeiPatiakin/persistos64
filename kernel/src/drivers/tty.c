@@ -74,7 +74,7 @@ void terminal_init_2() {
         u8p("tty1"),
         DEVICE_TTY,
         tty1.device_number,
-        &tty_device_fops,
+        &tty_device_ops,
         &tty1
     );
     tty2_inode = vfs_mknod(
@@ -82,7 +82,7 @@ void terminal_init_2() {
         u8p("tty2"),
         DEVICE_TTY,
         tty2.device_number,
-        &tty_device_fops,
+        &tty_device_ops,
         &tty2
     );
     tty3_inode = vfs_mknod(
@@ -90,7 +90,7 @@ void terminal_init_2() {
         u8p("tty3"),
         DEVICE_TTY,
         tty3.device_number,
-        &tty_device_fops,
+        &tty_device_ops,
         &tty3
     );
     tty4_inode = vfs_mknod(
@@ -98,7 +98,7 @@ void terminal_init_2() {
         u8p("tty4"),
         DEVICE_TTY,
         tty4.device_number,
-        &tty_device_fops,
+        &tty_device_ops,
         &tty4
     );
 }
@@ -378,7 +378,7 @@ void panic(uint8_t *message) {
     halt_forever();
 }
 
-struct file_operations tty_device_fops = {
+struct device_operations tty_device_ops = {
     .read = vt_read,
     .write = vt_write
 };

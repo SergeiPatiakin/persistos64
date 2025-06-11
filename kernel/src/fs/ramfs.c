@@ -63,7 +63,7 @@ ssize_t ramfs_create_dev_inode(
     struct inode *parent_dir,
     uint16_t device_type,
     uint16_t device_number,
-    struct file_operations *device_fops,
+    struct device_operations *device_ops,
     void *device,
     struct inode *out_inode,
     struct dentry *out_dentry
@@ -72,7 +72,7 @@ ssize_t ramfs_create_dev_inode(
     out_inode->superblock = parent_dir->superblock;
     out_inode->device_type = device_type;
     out_inode->device_number = device_number;
-    out_inode->device_fops = device_fops;
+    out_inode->device_ops = device_ops;
     out_inode->device = device;
     out_dentry->inode = out_inode;
     out_dentry->mounted_inode = NULL;

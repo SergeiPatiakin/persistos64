@@ -26,12 +26,12 @@ void dev_mem_init() {
         u8p("mem"),
         DEVICE_MEM,
         1,
-        &dev_mem_fops,
+        &mem_device_ops,
         NULL // Could point to some dummy struct instead
     );
 }
 
-struct file_operations dev_mem_fops = {
+struct device_operations mem_device_ops = {
     .read = dev_mem_read,
     .write = dev_mem_write,
 };

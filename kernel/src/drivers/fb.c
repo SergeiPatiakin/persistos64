@@ -7,7 +7,7 @@
 
 struct limine_framebuffer *framebuffer;
 ssize_t framebuffer_length;
-struct file_operations fb_device_fops;
+struct device_operations fb_device_ops;
 
 void fb_init() {
     framebuffer = framebuffer_request.response->framebuffers[0];
@@ -17,7 +17,7 @@ void fb_init() {
         u8p("fb0"),
         DEVICE_FRAMEBUFFER,
         1,
-        &fb_device_fops,
+        &fb_device_ops,
         NULL
     );
 }
@@ -45,7 +45,7 @@ ssize_t fb_ioctl(void *dev, uint64_t cmd, uint64_t arg) {
     return 0;
 }
 
-struct file_operations fb_device_fops = {
+struct device_operations fb_device_ops = {
     .read = fb_read,
     .write = fb_write,
 };

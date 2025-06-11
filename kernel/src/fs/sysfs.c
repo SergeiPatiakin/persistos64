@@ -29,7 +29,7 @@ ssize_t sysfs_mount(struct inode *device_inode, struct dentry *mountpoint_dentry
 
 void sysfs_init() {
     sysfs_superblock.device = NULL;
-    sysfs_superblock.device_fops = NULL;
+    sysfs_superblock.device_ops = NULL;
     sysfs_superblock.ops = &sysfs_superblock_ops;
     sysfs_superblock.private = NULL;
 
@@ -103,7 +103,7 @@ ssize_t sysfs_create_dev_inode(
     struct inode *parent_dir,
     uint16_t device_type,
     uint16_t device_number,
-    struct file_operations *device_fops,
+    struct device_operations *device_ops,
     void *device,
     struct inode *out_inode,
     struct dentry *out_dentry
@@ -111,7 +111,7 @@ ssize_t sysfs_create_dev_inode(
     (void) parent_dir;
     (void) device_type;
     (void) device_number;
-    (void) device_fops;
+    (void) device_ops;
     (void) device;
     (void) out_inode;
     (void) out_dentry;

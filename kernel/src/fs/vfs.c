@@ -27,7 +27,7 @@ void vfs_init() {
     
     vfs_root_superblock.private = &ramfs_root_superblock;
     vfs_root_superblock.device = NULL;
-    vfs_root_superblock.device_fops = NULL;
+    vfs_root_superblock.device_ops = NULL;
     vfs_root_superblock.ops = &ramfs_superblock_ops;
     vfs_root_inode.superblock = &vfs_root_superblock;
 
@@ -64,7 +64,7 @@ struct inode *vfs_mknod(
     uint8_t *name,
     uint16_t device_type,
     uint16_t device_number,
-    struct file_operations *device_fops,
+    struct device_operations *device_ops,
     void *device
 ) {
     struct inode *dev_inode = inode_alloc();
@@ -74,7 +74,7 @@ struct inode *vfs_mknod(
         parent_dir,
         device_type,
         device_number,
-        device_fops,
+        device_ops,
         device,
         dev_inode,
         dev_dentry
@@ -155,7 +155,7 @@ void vfs_resolve(uint8_t *path, struct vfs_lookup_result *lookup_result) {
 
 ssize_t vfs_write(struct file *filp, void *buffer, size_t length) {
     if (filp->inode->type == INODE_DEVICE) {
-        ssize_t bytes_written = filp->inode->device_fops->write(
+        ssize_t bytes_written = filp->inode->device_ops->write(
             filp->inode->device,
             buffer,
             filp->offset,
@@ -184,7 +184,7 @@ ssize_t vfs_write(struct file *filp, void *buffer, size_t length) {
 
 ssize_t vfs_read(struct file *filp, void *buffer, size_t length) {
     if (filp->inode->type == INODE_DEVICE) {
-        ssize_t bytes_read = filp->inode->device_fops->read(
+        ssize_t bytes_read = filp->inode->device_ops->read(
             filp->inode->device,
             buffer,
             filp->offset,

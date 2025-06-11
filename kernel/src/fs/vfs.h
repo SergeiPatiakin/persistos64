@@ -17,7 +17,7 @@ struct inode;
 struct file;
 struct dentry;
 struct superblock;
-struct file_operations;
+struct device_operations;
 struct task_struct;
 
 struct filesystem_ops {
@@ -39,7 +39,7 @@ struct filesystem_ops {
         struct inode *parent_inode,
         uint16_t device_type,
         uint16_t device_number,
-        struct file_operations *device_fops,
+        struct device_operations *device_ops,
         void *device,
         struct inode *out_inode,
         struct dentry *out_dentry
@@ -53,7 +53,7 @@ struct filesystem_ops {
 struct superblock {
     void *private;
     struct filesystem_ops *ops;
-    struct file_operations *device_fops; // Device file operations for underlying device
+    struct device_operations *device_ops; // Device file operations for underlying device
     void *device; // Underlying device
 };
 
@@ -72,7 +72,7 @@ struct inode {
         struct {
             uint16_t device_type;
             uint16_t device_number;
-            struct file_operations *device_fops;
+            struct device_operations *device_ops;
             void *device;
         };
 
@@ -108,7 +108,7 @@ struct vfs_lookup_result {
 #define VFS_RESOLVE_ERR_DOESNT_EXIST 3
 #define VFS_RESOLVE_ERR_NOT_A_DIR 4
 
-struct file_operations {
+struct device_operations {
     ssize_t (*write)(void *dev, uint8_t* buffer, uint64_t offset, size_t length);
     ssize_t (*read)(void *dev, uint8_t* buffer, uint64_t offset, size_t length);
 };
@@ -139,7 +139,7 @@ struct inode *vfs_mknod(
     uint8_t *name,
     uint16_t device_type,
     uint16_t device_number,
-    struct file_operations *fops,
+    struct device_operations *fops,
     void *device
 );
 struct inode *vfs_mkdir(

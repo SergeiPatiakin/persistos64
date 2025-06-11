@@ -46,7 +46,7 @@ extern struct inode *tty2_inode;
 extern struct inode *tty3_inode;
 extern struct inode *tty4_inode;
 
-extern struct file_operations tty_device_fops;
+extern struct device_operations tty_device_ops;
 
 void terminal_init_1();
 void terminal_init_2();
