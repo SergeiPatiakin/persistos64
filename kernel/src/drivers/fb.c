@@ -6,7 +6,7 @@
 #include "fb.h"
 
 struct limine_framebuffer *framebuffer;
-ssize_t framebuffer_length;
+size_t framebuffer_length;
 struct device_operations fb_device_ops;
 
 void fb_init() {
@@ -23,10 +23,15 @@ void fb_init() {
 }
 
 ssize_t fb_read(void *dev, uint8_t* buffer, uint64_t offset, size_t length) {
+    (void) dev;
+    (void) buffer;
+    (void) offset;
+    (void) length;
     return -1;
 }
 
 ssize_t fb_write(void *dev, uint8_t* buffer, uint64_t offset, size_t length) {
+    (void) dev;
     if (offset > framebuffer_length) {
         return 0;
     }
@@ -38,11 +43,19 @@ ssize_t fb_write(void *dev, uint8_t* buffer, uint64_t offset, size_t length) {
 }
 
 ssize_t fb_ioctl(void *dev, uint64_t cmd, uint64_t arg) {
-    struct fb_info *info = arg;
-    info->fb_width = framebuffer->width;
-    info->fb_height = framebuffer->height;
-    info->fb_pitch = framebuffer->pitch;
-    return 0;
+    (void) dev;
+    switch (cmd) {
+        case 1: {
+            struct fb_info *info = (void*)arg;
+            info->fb_width = framebuffer->width;
+            info->fb_height = framebuffer->height;
+            info->fb_pitch = framebuffer->pitch;
+            return 0;
+        }
+        default: {
+            return -1;
+        }
+    }
 }
 
 struct device_operations fb_device_ops = {

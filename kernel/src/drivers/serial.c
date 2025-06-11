@@ -19,14 +19,14 @@ int serial_init() {
 
     // Check if serial is faulty (i.e: not same byte as sent)
     if(inb(SERIAL_IO_PORT + 0) != 0xAE) {
-        printk("Serial is faulty\n");
+        printk(u8p("Serial is faulty\n"));
         return 1;
     }
 
     // If serial is not faulty set it in normal operation mode
     // (not-loopback with IRQs enabled and OUT#1 and OUT#2 bits enabled)
     outb(SERIAL_IO_PORT + 4, 0x0F);
-    printk("Serial works\n");
+    printk(u8p("Serial works\n"));
     serial0.device_number = 1;
     vfs_mknod(
         vfs_dev_dir_inode,
@@ -60,7 +60,8 @@ char read_serial() {
 }
 
 ssize_t serial_write(void *dev, uint8_t *buffer, uint64_t offset, size_t length) {
-    (void) offset; // Unused
+    (void) dev;
+    (void) offset;
     size_t bytes_written = 0;
     for (size_t i = 0; i < length; i++) {
         while (is_transmit_empty() == 0);
@@ -71,7 +72,9 @@ ssize_t serial_write(void *dev, uint8_t *buffer, uint64_t offset, size_t length)
 }
 
 ssize_t serial_read(void *dev, uint8_t *buffer, uint64_t offset, size_t length) {
-    (void) offset; // Unused
+    (void) dev;
+    (void) offset;
+    (void) length;
     while (serial_received() == 0) {
         task_yield();
     }

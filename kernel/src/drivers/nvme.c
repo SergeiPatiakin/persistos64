@@ -197,9 +197,9 @@ void nvme_probe_2(struct nvme_device *nvme_device) {
     uint32_t version = *((uint32_t*)(pci_device->mmio_virt_base + 0x8));
     uint16_t mqes = cap & 0xFFFF;
     if (mqes < NVME_QUEUE_SIZE_MINUS_ONE) {
-        printk("nvme: CAP.MQES is too small. cap=0x");
+        printk(u8p("nvme: CAP.MQES is too small. cap=0x"));
         printk_uint64(cap);
-        printk_str("\n");
+        printk_str(u8p("\n"));
     }
 
     nvme_device->pci_device = pci_device;

@@ -39,26 +39,26 @@ void main(int argc, uint8_t* argv[]) {
         fputs(u8p("iview: error opening file\n"), stderr);
         exit(1);
     }
-    ssize_t fb_fd = open("/dev/fb0", 0);
+    ssize_t fb_fd = open(u8p("/dev/fb0"), 0);
     if (is_error(fb_fd)) {
         fputs(u8p("iview: error opening framebuffer\n"), stderr);
         exit(1);
     }
     struct bmp_file_header file_header_buffer;
-    read(img_fd, &file_header_buffer, sizeof(struct bmp_file_header));
+    read(img_fd, (void*)&file_header_buffer, sizeof(struct bmp_file_header));
     if (file_header_buffer.ident[0] != 'B' || file_header_buffer.ident[1] != 'M') {
         fputs(u8p("iview: not a BMP file\n"), stderr);
         exit(1);
     }
     struct bmp_bitmap_info bitmap_info_buffer;
-    read(img_fd, &bitmap_info_buffer, sizeof(struct bmp_bitmap_info));
+    read(img_fd, (void*)&bitmap_info_buffer, sizeof(struct bmp_bitmap_info));
     if (bitmap_info_buffer.bbp != 24) {
         fputs(u8p("iview: only 24-bit bitmaps supported\n"), stderr);
         exit(1);
     }
 
     struct fb_info fb_info;
-    if (is_error(ioctl(fb_fd, 1, &fb_info))) {
+    if (is_error(ioctl(fb_fd, 1, (uint64_t)&fb_info))) {
         fputs(u8p("iview: error in ioctl\n"), stderr);
         exit(1);
     }
@@ -67,8 +67,8 @@ void main(int argc, uint8_t* argv[]) {
     size_t fb_height = fb_info.fb_height;
     size_t fb_pitch = fb_info.fb_pitch;
 
-    size_t width_to_display = fb_width < bitmap_info_buffer.width ? fb_width : bitmap_info_buffer.width;
-    size_t height_to_display = fb_height < bitmap_info_buffer.height ? fb_height : bitmap_info_buffer.height;
+    int width_to_display = fb_width < bitmap_info_buffer.width ? fb_width : bitmap_info_buffer.width;
+    int height_to_display = fb_height < bitmap_info_buffer.height ? fb_height : bitmap_info_buffer.height;
 
     uint8_t *img_pixels_buffer = malloc(width_to_display * 3);
     uint8_t *fb_pixels_buffer = malloc(width_to_display * 4);

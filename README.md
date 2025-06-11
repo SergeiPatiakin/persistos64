@@ -9,6 +9,7 @@ https://github.com/user-attachments/assets/dd18ae70-c1ad-4c91-aac6-fdc6e251b509
 - Serial port
 - PCI
 - NVME
+- Framebuffer
 ### Virtual device drivers
 - VT100-like video terminal
 ### Filesystem
@@ -23,4 +24,4 @@ https://github.com/user-attachments/assets/dd18ae70-c1ad-4c91-aac6-fdc6e251b509
 ### Userspace
 - Shell
 - Basic utilities
-
+- Image viewer

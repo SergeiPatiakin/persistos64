@@ -237,12 +237,12 @@ void exfat_load_cluster_chain(struct inode *inode) {
                 4
             );
             if (device_bytes_read != 4) {
-                printk("exfat: could not read FAT entry from backing device\n");
+                printk(u8p("exfat: could not read FAT entry from backing device\n"));
                 break;
             }
         
             if (fat_entry == 0x00000000) {
-                printk("exfat: unexpected zeroed FAT entry in chain\n");
+                printk(u8p("exfat: unexpected zeroed FAT entry in chain\n"));
                 break;
             } else if (fat_entry == 0x00000001) {
                 printk(u8p("exfat: unexpected cluster 0x00000001 in chain\n"));
@@ -371,18 +371,18 @@ ssize_t exfat_set_size(struct file *filp, size_t size) {
     uint8_t buffer[32];
     vfs_superblock->device_ops->read(
         vfs_superblock->device,
-        &buffer,
+        buffer,
         cluster_index_to_device_offset(exfat_inode->dentry_cluster_index, exfat_superblock) + exfat_inode->dentry_cluster_offset,
         32
     );
     if (*((uint32_t*)(buffer + 0x8)) != filp->inode->file_length) {
-        printk("exfat: file length inconsistency\n");
+        printk(u8p("exfat: file length inconsistency\n"));
         return -3;
     }
     *((uint32_t*)(buffer + 0x8)) = size; // really uint64_t
     vfs_superblock->device_ops->write(
         vfs_superblock->device,
-        &buffer,
+        buffer,
         cluster_index_to_device_offset(exfat_inode->dentry_cluster_index, exfat_superblock) + exfat_inode->dentry_cluster_offset,
         32
     );
