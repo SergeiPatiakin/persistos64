@@ -34,7 +34,7 @@ void enable_interrupts(void) {
 }
 
 void disable_interrupts(void) {
-    asm volatile ("sti");
+    asm volatile ("cli");
 }
 
 void halt_forever(void) {
