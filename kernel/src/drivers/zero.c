@@ -39,4 +39,5 @@ void dev_zero_init() {
 struct device_operations zero_device_ops = {
     .read = dev_zero_read,
     .write = dev_zero_write,
+    .ioctl = NULL,
 };

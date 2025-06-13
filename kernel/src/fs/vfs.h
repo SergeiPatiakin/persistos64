@@ -111,6 +111,7 @@ struct vfs_lookup_result {
 struct device_operations {
     ssize_t (*write)(void *dev, uint8_t* buffer, uint64_t offset, size_t length);
     ssize_t (*read)(void *dev, uint8_t* buffer, uint64_t offset, size_t length);
+    ssize_t (*ioctl)(void *dev, uint64_t cmd, uint64_t arg);
 };
 
 struct file {

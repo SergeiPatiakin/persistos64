@@ -92,5 +92,6 @@ ssize_t serial_read(void *dev, uint8_t *buffer, uint64_t offset, size_t length) 
 
 struct device_operations serial_device_ops = {
     .read = serial_read,
-    .write = serial_write
+    .write = serial_write,
+    .ioctl = NULL,
 };

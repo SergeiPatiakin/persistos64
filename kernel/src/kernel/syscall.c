@@ -524,14 +524,14 @@ uint64_t handle_syscall(
             if (filp->inode->type != INODE_DEVICE) {
                 return -2;
             }
-            switch (filp->inode->device_type) {
-                case DEVICE_FRAMEBUFFER: {
-                    return fb_ioctl(NULL, cmd, arg);
-                }
-                default: {
-                    return -3;
-                }
+            if (!filp->inode->device_ops->ioctl) {
+                return -3;
             }
+            return filp->inode->device_ops->ioctl(
+                filp->inode->device,
+                cmd,
+                arg
+            );
         }
         default: {
             printk(u8p("Unrecognized syscall: "));

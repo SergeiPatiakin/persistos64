@@ -61,4 +61,5 @@ ssize_t fb_ioctl(void *dev, uint64_t cmd, uint64_t arg) {
 struct device_operations fb_device_ops = {
     .read = fb_read,
     .write = fb_write,
+    .ioctl = fb_ioctl,
 };

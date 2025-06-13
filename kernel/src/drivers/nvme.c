@@ -685,4 +685,5 @@ ssize_t nvme_write(void *dev, uint8_t* buffer, uint64_t offset, size_t length) {
 struct device_operations nvme_device_ops = {
     .read = nvme_read,
     .write = nvme_write,
+    .ioctl = NULL,
 };

@@ -380,5 +380,6 @@ void panic(uint8_t *message) {
 
 struct device_operations tty_device_ops = {
     .read = vt_read,
-    .write = vt_write
+    .write = vt_write,
+    .ioctl = NULL,
 };

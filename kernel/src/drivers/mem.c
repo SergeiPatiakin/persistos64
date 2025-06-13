@@ -34,4 +34,5 @@ void dev_mem_init() {
 struct device_operations mem_device_ops = {
     .read = dev_mem_read,
     .write = dev_mem_write,
+    .ioctl = NULL,
 };
