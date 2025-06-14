@@ -47,6 +47,10 @@ echo test_shell_single_quotes
 e'ch'o h'el'lo '  world' > td/shell_single_quotes.out
 diff td/shell_single_quotes.out test/shell_single_quotes.out.exp
 
+echo test_shell_script
+shell test/hello.sh > td/shell_script.out
+diff td/shell_script.out test/shell_script.out.exp
+
 echo test_hd_basic
 hd test/hd_basic.txt > td/hd_basic.out
 diff td/hd_basic.out test/hd_basic.out.exp
@@ -104,5 +108,8 @@ set +e
 fault bad-write
 assert_exit_code 139
 set -e
+
+echo test_sleep_smoke
+sleep 10
 
 echo All tests successful
