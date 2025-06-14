@@ -145,8 +145,8 @@ dup2:
     int $0x80
     retq
 
-.global gettasks
-gettasks:
+.global gettents
+gettents:
     movq %rdx, %rcx
     movq %rsi, %rdx
     movq %rdi, %rsi

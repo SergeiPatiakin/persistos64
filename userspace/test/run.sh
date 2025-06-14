@@ -76,4 +76,9 @@ echo test_dd_basic
 dd if=test/dd_basic.txt of=td/dd_basic.out bs=2 skip=3 count=4 seek=5
 diff td/dd_basic.out test/dd_basic.out.exp
 
+echo test_ps_basic
+ps > td/ps_basic.out
+dd if=td/ps_basic.out of=td/ps_basic_trunc.out bs=32 count=1
+diff td/ps_basic_trunc.out test/ps_basic_trunc.out.exp
+
 echo All tests successful

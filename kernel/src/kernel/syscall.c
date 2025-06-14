@@ -9,6 +9,7 @@
 #include "fs/tar.h"
 #include "fs/vfs.h"
 #include "fs/exfat.h"
+#include "include/persistos-headers.h"
 #include "lib/list.h"
 #include "kernel/scheduler.h"
 #include "kernel/limine-requests.h"
@@ -33,7 +34,7 @@
 #define SYSCALL_LSEEK 14
 #define SYSCALL_FTRUNCATE 15
 #define SYSCALL_DUP2 16
-#define SYSCALL_GETTASKS 17
+#define SYSCALL_GETTENTS 17
 #define SYSCALL_KILL 18
 #define SYSCALL_SLEEP 19
 #define SYSCALL_MOUNT 20
@@ -344,15 +345,14 @@ uint64_t handle_syscall(
             list_for_each(dentry_le, filp->inode->dentry_lh) {
                 struct dentry *dentry = container_of(dentry_le, struct dentry, dentry_le);
                 uint16_t dentry_name_strlen = strlen(dentry->name);
-                uint16_t len_required = sizeof(uint16_t) + dentry_name_strlen + 1;
-                if (buf + len_required <= end_of_buf) {
-                    *((uint16_t*)buf) = len_required;
-                    buf += sizeof(uint16_t);
-                    strcpy(buf, dentry->name);
-                    buf += (dentry_name_strlen + 1);
-                } else {
+                uint16_t len_required = sizeof(struct dent_header) + dentry_name_strlen + 1;
+                if (buf + len_required > end_of_buf) {
                     break;
                 }
+                struct dent_header *header = buf;
+                header->len = len_required;
+                strcpy(buf + sizeof(struct dent_header), dentry->name);
+                buf += len_required;
             }
             return buf - buf_start;
         }
@@ -434,7 +434,7 @@ uint64_t handle_syscall(
             list_add_tail(&new_filp->files_le, next_filp_le);
             return new_filp->fd;
         }
-        case SYSCALL_GETTASKS: {
+        case SYSCALL_GETTENTS: {
             uint8_t *buf_start = (void*)arg3;
             uint8_t *buf = buf_start;
             uint8_t *end_of_buf = buf + arg4;
@@ -446,18 +446,15 @@ uint64_t handle_syscall(
                 );
                 uint16_t ts_name_strlen = strlen(ts->name);
                 uint16_t len_required = sizeof(uint32_t) + sizeof(uint16_t) + ts_name_strlen + 1;
-                if (buf + len_required <= end_of_buf) {
-                    *((uint32_t*)buf) = ts->pid;
-                    buf += sizeof(uint32_t);
-                    *((uint8_t*)buf) = ts->task_state;
-                    buf += sizeof(uint8_t);
-                    *((uint16_t*)buf) = ts_name_strlen;
-                    buf += sizeof(uint16_t);
-                    strcpy(buf, ts->name);
-                    buf += (ts_name_strlen + 1);
-                } else {
+                if (buf + len_required > end_of_buf) {
                     break;
                 }
+                struct tent_header *header = buf;
+                header->pid = ts->pid;
+                header->state = ts->task_state;
+                header->len = ts_name_strlen;
+                strcpy(buf + sizeof(struct tent_header), ts->name);
+                buf += (sizeof(struct tent_header) + ts_name_strlen + 1);
             }
             return buf - buf_start;
         }

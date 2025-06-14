@@ -37,7 +37,7 @@ bool is_error(ssize_t x);
 /* 14 */ ssize_t lseek(uint64_t fd, uint64_t offset, int whence);
 /* 15 */ ssize_t ftruncate(uint64_t fd, uint64_t size);
 /* 16 */ ssize_t dup2(uint64_t old_fd, uint64_t new_fd);
-/* 17 */ ssize_t gettasks(uint8_t *buf, size_t size);
+/* 17 */ ssize_t gettents(uint8_t *buf, size_t size);
 /* 18 */ ssize_t kill(uint64_t pid, uint64_t sig);
 /* 19 */ ssize_t sleep(uint64_t millis);
 /* 20 */ ssize_t mount(uint8_t *dev_name, uint8_t *dir_name, uint8_t *type);

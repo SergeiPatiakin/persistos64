@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "cstd.h"
 #include <persistos.h>
+#include <persistos-headers.h>
 
 void main(int argc, uint8_t* argv[]) {
     uint8_t *path;
@@ -20,12 +21,12 @@ void main(int argc, uint8_t* argv[]) {
         fputs(u8p("ls: Error in getdents\n"), stderr);
         exit(1);
     }
-    uint8_t *x = buf;
-    while (x < buf + bytes_read) {
-        uint16_t len = *((uint16_t*)x);
-        puts(x + sizeof(uint16_t));
+    uint8_t *buf_cursor = buf;
+    while (buf_cursor < buf + bytes_read) {
+        struct dent_header *header = buf_cursor;
+        puts(buf_cursor + sizeof(struct dent_header));
         puts(u8p("\n"));
-        x += len;
+        buf_cursor += header->len;
     }
     exit(0);
 }
