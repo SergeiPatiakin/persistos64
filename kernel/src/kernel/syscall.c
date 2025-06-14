@@ -50,23 +50,30 @@ uint64_t handle_syscall(
 ) {
     switch(syscall_number) {
         case SYSCALL_WRITE: {
-            struct file *filp = filp_find(current_task_ts, arg3);
+            uint64_t fd = arg3;
+            uint8_t *buffer = (uint8_t*)arg4;
+            uint64_t length = arg5;
+            struct file *filp = filp_find(current_task_ts, fd);
             if (!filp) {
                 return -1;
             }
-            ssize_t write_result = vfs_write(filp, u8p(arg4), arg5); // Unsafe
+            ssize_t write_result = vfs_write(filp, buffer, length); // Unsafe
             return write_result;
         }
         case SYSCALL_READ: {
-            struct file *filp = filp_find(current_task_ts, arg3);
+            uint64_t fd = arg3;
+            uint8_t *buffer = (uint8_t*)arg4;
+            uint64_t length = arg5;
+            struct file *filp = filp_find(current_task_ts, fd);
             if (!filp) {
                 return -1;
             }
-            ssize_t read_result = vfs_read(filp, u8p(arg4), arg5); // Unsafe
+            ssize_t read_result = vfs_read(filp, buffer, length); // Unsafe
             return read_result;
         }
         case SYSCALL_EXIT: {
-            make_zombie(current_task_ts, arg3);
+            uint8_t exit_code = arg3;
+            make_zombie(current_task_ts, exit_code);
             task_yield();
             // No return
         }
@@ -222,6 +229,7 @@ uint64_t handle_syscall(
             return 0;
         }
         case SYSCALL_BRK: {
+            uint64_t brk = arg3;
             struct userspace_memory_range *heap_range = NULL;
             for (
                 struct list_head *memory_ranges_le = current_task_ts->memory_ranges_lh.next;
@@ -238,17 +246,19 @@ uint64_t handle_syscall(
                 printk(u8p("No heap range found!\n"));
                 return 0;
             }
-            if (arg3 == 0) {
+            if (brk == 0) {
                 return heap_range->end;
             }
-            while (heap_range->end < arg3) {
+            while (heap_range->end < brk) {
                 map_user_page(current_task_ts, (void*)heap_range->end);
                 heap_range->end += PAGE_SIZE;
             }
             return heap_range->end;
         }
         case SYSCALL_WAITPID: {
-            struct task_struct *process = task_struct_find(arg3);
+            uint64_t pid = arg3;
+            uint64_t *info = (uint64_t*)arg4;
+            struct task_struct *process = task_struct_find(pid);
             if (!process) {
                 return -1;
             }
@@ -259,14 +269,16 @@ uint64_t handle_syscall(
             free_userspace_memory(process);
             free_kernelspace_memory(process);
             free_task(process);
-            if (arg4) {
-                *((uint64_t*)arg4) = process->exit_code;
+            if (info) {
+                *info = process->exit_code;
             }
-            return arg3;
+            return pid;
         }
         case SYSCALL_OPEN: {
             struct vfs_lookup_result lookup_result;
             uint8_t *path_arg = (void*)arg3;
+            uint64_t flags = arg4;
+
             vfs_resolve(path_arg, &lookup_result);
             if (lookup_result.status == VFS_RESOLVE_ERR_NOT_A_DIR) {
                 return -1;
@@ -275,7 +287,7 @@ uint64_t handle_syscall(
                 return -2;
             }
             if (lookup_result.status == VFS_RESOLVE_SUCCESS_DOESNT_EXIST) {
-                if (arg4 & O_CREAT) {
+                if (flags & O_CREAT) {
                     struct inode *create_result = vfs_create(
                         lookup_result.parent_directory,
                         lookup_result.name_start // should be null-terminated because it's at end of path
@@ -312,7 +324,7 @@ uint64_t handle_syscall(
                     filp->fd = container_of(previous_filp_le, struct file, files_le)->fd + 1;
                 }
                 // Ignore O_TRUNCATE for directories and device files
-                if (filp->inode->type == INODE_REGULAR_FILE && (arg4 & O_TRUNCATE)) {
+                if (filp->inode->type == INODE_REGULAR_FILE && (flags & O_TRUNCATE)) {
                     ssize_t truncate_result = vfs_ftruncate(filp, 0);
                     if (truncate_result < 0) {
                         return truncate_result;
@@ -323,7 +335,8 @@ uint64_t handle_syscall(
             panic(u8p("Unknown lookup status\n"));
         }
         case SYSCALL_CLOSE: {
-            struct file *filp = filp_find(current_task_ts, arg3);
+            uint64_t fd = arg3;
+            struct file *filp = filp_find(current_task_ts, fd);
             if (!filp) {
                 return -1;
             }
@@ -332,16 +345,20 @@ uint64_t handle_syscall(
             return 0;
         }
         case SYSCALL_GETDENTS: {
-            struct file *filp = filp_find(current_task_ts, arg3);
+            uint64_t fd = arg3;
+            uint8_t *buf_start = (uint8_t*)arg4;
+            uint64_t length = arg5;
+
+            struct file *filp = filp_find(current_task_ts, fd);
             if (!filp) {
                 return -1;
             }
             if (filp->inode->type != INODE_DIRECTORY) {
                 return -2;
             }
-            uint8_t *buf_start = (void*)arg4;
+            
             uint8_t *buf = buf_start;
-            uint8_t *end_of_buf = buf + arg5;
+            uint8_t *end_of_buf = buf + length;
             list_for_each(dentry_le, filp->inode->dentry_lh) {
                 struct dentry *dentry = container_of(dentry_le, struct dentry, dentry_le);
                 uint16_t dentry_name_strlen = strlen(dentry->name);
@@ -349,7 +366,7 @@ uint64_t handle_syscall(
                 if (buf + len_required > end_of_buf) {
                     break;
                 }
-                struct dent_header *header = buf;
+                struct dent_header *header = (struct dent_header*)buf;
                 header->len = len_required;
                 strcpy(buf + sizeof(struct dent_header), dentry->name);
                 buf += len_required;
@@ -357,8 +374,9 @@ uint64_t handle_syscall(
             return buf - buf_start;
         }
         case SYSCALL_MKDIR: {
-            struct vfs_lookup_result lookup_result;
             uint8_t *path_arg = (void*)arg3;
+            
+            struct vfs_lookup_result lookup_result;
             vfs_resolve(path_arg, &lookup_result);
             if (lookup_result.status == VFS_RESOLVE_ERR_NOT_A_DIR) {
                 return -1;
@@ -398,7 +416,7 @@ uint64_t handle_syscall(
                 return -2;
             }
             filp->offset = offset;
-            return arg4;
+            return offset;
         }
         case SYSCALL_FTRUNCATE: {
             uint64_t fd = arg3;
@@ -435,9 +453,11 @@ uint64_t handle_syscall(
             return new_filp->fd;
         }
         case SYSCALL_GETTENTS: {
-            uint8_t *buf_start = (void*)arg3;
+            uint8_t *buf_start = (uint8_t*)arg3;
+            uint64_t length = arg4;
+
             uint8_t *buf = buf_start;
-            uint8_t *end_of_buf = buf + arg4;
+            uint8_t *end_of_buf = buf + length;
             list_for_each(task_struct_le, task_struct_lh) {
                 struct task_struct *ts = container_of(
                     task_struct_le,
@@ -449,7 +469,7 @@ uint64_t handle_syscall(
                 if (buf + len_required > end_of_buf) {
                     break;
                 }
-                struct tent_header *header = buf;
+                struct tent_header *header = (struct tent_header*)buf;
                 header->pid = ts->pid;
                 header->state = ts->task_state;
                 header->len = ts_name_strlen;
@@ -470,8 +490,10 @@ uint64_t handle_syscall(
             return 0;
         }
         case SYSCALL_SLEEP: {
+            uint64_t duration_ms = arg3;
+
             uint64_t start_ticks = timer_ticks;
-            uint64_t end_ticks = start_ticks + 1 + (arg3 - 1) * TIMER_TICKS_PER_SECOND / 1000;
+            uint64_t end_ticks = start_ticks + 1 + (duration_ms - 1) * TIMER_TICKS_PER_SECOND / 1000;
             while (timer_ticks < end_ticks) {
                 task_yield();
             }

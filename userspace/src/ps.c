@@ -15,7 +15,7 @@ int main(int argc, uint8_t* argv[]) {
     }
     uint8_t *buf_cursor = buf;
     while (buf_cursor < buf + bytes_read) {
-        struct tent_header *tent = buf_cursor;
+        struct tent_header *tent = (struct tent_header*)buf_cursor;
         uint8_t *name = buf_cursor + sizeof(struct tent_header);
         buf_cursor += sizeof(struct tent_header) + tent->len + 1;
         

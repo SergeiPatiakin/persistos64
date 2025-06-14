@@ -23,7 +23,7 @@ void main(int argc, uint8_t* argv[]) {
     }
     uint8_t *buf_cursor = buf;
     while (buf_cursor < buf + bytes_read) {
-        struct dent_header *header = buf_cursor;
+        struct dent_header *header = (struct dent_header*)buf_cursor;
         puts(buf_cursor + sizeof(struct dent_header));
         puts(u8p("\n"));
         buf_cursor += header->len;

@@ -49,13 +49,13 @@ void cpu_exception_handler(
 ) {
     if (interrupt_number == 0) {
         printk(u8p("Division by zero\n"));
-        make_zombie(current_task_ts, 1); // TODO: better exit code
+        make_zombie(current_task_ts, 128 + 8); // 8 is SIGFPE
         task_yield();
     } else if (interrupt_number == 8) {
         panic(u8p("Double fault\n"));
     } else if (interrupt_number == 13) {
         printk(u8p("General protection fault\n"));
-        make_zombie(current_task_ts, 128 + 11); // 11 is SIGSEGV
+        make_zombie(current_task_ts, 128 + 4); // 4 is SIGILL
         task_yield();
     } else if (interrupt_number == 14) {
         uint8_t access_address_buf[17];
@@ -76,7 +76,7 @@ void cpu_exception_handler(
             panic(u8p("Fault in upper half\n"));
         }
 
-        make_zombie(current_task_ts, 1); // TODO: better exit code
+        make_zombie(current_task_ts, 128 + 11); // 11 is SIGSEGV
         task_yield();
     } else {
         panic(u8p("Unknown CPU exception"));

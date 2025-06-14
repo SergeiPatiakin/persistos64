@@ -81,4 +81,28 @@ ps > td/ps_basic.out
 dd if=td/ps_basic.out of=td/ps_basic_trunc.out bs=32 count=1
 diff td/ps_basic_trunc.out test/ps_basic_trunc.out.exp
 
+echo test_fault_div_zero
+set +e
+fault div-zero
+assert_exit_code 136
+set -e
+
+echo test_fault_priv_instr
+set +e
+fault priv-instr
+assert_exit_code 132
+set -e
+
+echo test_fault_bad_read
+set +e
+fault bad-read
+assert_exit_code 139
+set -e
+
+echo test_fault_bad_write
+set +e
+fault bad-write
+assert_exit_code 139
+set -e
+
 echo All tests successful
