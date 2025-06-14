@@ -14,10 +14,10 @@
 
 struct superblock sysfs_superblock;
 struct inode sysfs_root_inode;
-struct dentry sysfs_pciinfo_dentry;
-struct inode sysfs_pciinfo_inode;
-struct dentry sysfs_meminfo_dentry;
-struct inode sysfs_meminfo_inode;
+struct dentry sysfs_pci_dentry;
+struct inode sysfs_pci_inode;
+struct dentry sysfs_memory_dentry;
+struct inode sysfs_memory_inode;
 struct dentry sysfs_nvme_dentry;
 struct inode sysfs_nvme_inode;
 
@@ -38,21 +38,21 @@ void sysfs_init() {
     init_list(&sysfs_root_inode.dentry_lh);
     sysfs_root_inode.private = NULL;
 
-    sysfs_pciinfo_inode.type = INODE_REGULAR_FILE;
-    sysfs_pciinfo_inode.file_length = 10;
-    sysfs_pciinfo_inode.superblock = &sysfs_superblock;
+    sysfs_pci_inode.type = INODE_REGULAR_FILE;
+    sysfs_pci_inode.file_length = 10;
+    sysfs_pci_inode.superblock = &sysfs_superblock;
 
-    strcpy(sysfs_pciinfo_dentry.name, u8p("pciinfo"));
-    list_add_tail(&sysfs_pciinfo_dentry.dentry_le, &sysfs_root_inode.dentry_lh);
-    sysfs_pciinfo_dentry.inode = &sysfs_pciinfo_inode;
+    strcpy(sysfs_pci_dentry.name, u8p("pci"));
+    list_add_tail(&sysfs_pci_dentry.dentry_le, &sysfs_root_inode.dentry_lh);
+    sysfs_pci_dentry.inode = &sysfs_pci_inode;
 
-    sysfs_meminfo_inode.type = INODE_REGULAR_FILE;
-    sysfs_meminfo_inode.file_length = 10;
-    sysfs_meminfo_inode.superblock = &sysfs_superblock;
+    sysfs_memory_inode.type = INODE_REGULAR_FILE;
+    sysfs_memory_inode.file_length = 10;
+    sysfs_memory_inode.superblock = &sysfs_superblock;
 
-    strcpy(sysfs_meminfo_dentry.name, u8p("meminfo"));
-    list_add_tail(&sysfs_meminfo_dentry.dentry_le, &sysfs_root_inode.dentry_lh);
-    sysfs_meminfo_dentry.inode = &sysfs_meminfo_inode;
+    strcpy(sysfs_memory_dentry.name, u8p("memory"));
+    list_add_tail(&sysfs_memory_dentry.dentry_le, &sysfs_root_inode.dentry_lh);
+    sysfs_memory_dentry.inode = &sysfs_memory_inode;
 
     sysfs_nvme_inode.type = INODE_REGULAR_FILE;
     sysfs_nvme_inode.file_length = 10;
@@ -149,7 +149,7 @@ ssize_t sysfs_read(struct file *filp, void *buffer, size_t length) {
     void *destination = buffer;
     size_t destination_length = length;
 
-    if(filp->inode == &sysfs_pciinfo_inode) {
+    if(filp->inode == &sysfs_pci_inode) {
         for (int i = 0; i < num_pci_devices; i++) {
             struct pci_device *dev = &pci_devices[i];
             uint8_t num_string_buffer[17];
@@ -239,7 +239,7 @@ ssize_t sysfs_read(struct file *filp, void *buffer, size_t length) {
             safe_copy_string(&destination, &destination_length, num_string_buffer);
             safe_copy_string(&destination, &destination_length, u8p(")\n"));
         }
-    } else if (filp->inode == &sysfs_meminfo_inode) {
+    } else if (filp->inode == &sysfs_memory_inode) {
         uint8_t num_string_buffer[11];
         safe_copy_string(&destination, &destination_length, u8p("total_memory_kib = "));
         sprintf_dec(kmem_total_pages * 4, num_string_buffer, 0, 0);

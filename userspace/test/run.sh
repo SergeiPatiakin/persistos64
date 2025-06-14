@@ -67,14 +67,10 @@ echo aaa > td/truncate_basic.out
 truncate td/truncate_basic.out
 diff td/touch_basic.out test/truncate_basic.out.exp
 
-echo test_sysfs_pciinfo
-cat /sys/pciinfo > td/sysfs_pciinfo.out
-
-echo test_sysfs_meminfo
-cat /sys/meminfo > td/sysfs_meminfo.out
-
-echo test_sysfs_nvme
-cat /sys/nvme > td/sysfs_nvme.out
+echo test_sysfs_smoke
+cat /sys/pci > /dev/zero
+cat /sys/memory > /dev/zero
+cat /sys/nvme > /dev/zero
 
 echo test_dd_basic
 dd if=test/dd_basic.txt of=td/dd_basic.out bs=2 skip=3 count=4 seek=5
