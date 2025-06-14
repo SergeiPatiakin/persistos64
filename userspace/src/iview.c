@@ -88,5 +88,7 @@ void main(int argc, uint8_t* argv[]) {
         write(fb_fd, fb_pixels_buffer, width_to_display * 4);
         lseek(fb_fd, fb_pitch * (i + 1), SEEK_SET);
     }
+    uint8_t buf[1];
+    read(0, buf, 1);
     exit(0);
 }
