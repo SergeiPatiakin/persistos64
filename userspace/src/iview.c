@@ -13,16 +13,16 @@ struct bmp_file_header {
 
 struct bmp_bitmap_info {
 	uint32_t size;
-	uint32_t width;
-	uint32_t height;
+	int32_t width;
+	int32_t height;
 	uint16_t colour_plain;
 	uint16_t bbp;
-	char compression_method[4];
-	char img_size[4];
-	char horizontal_res[4];
-	char vertical_res[4];
-	char num_colours[4];
-	char important_colours[4];
+	uint32_t compression_method;
+	uint32_t img_size;
+	int32_t horizontal_res;
+	int32_t vertical_res;
+	uint32_t num_colours;
+	uint32_t important_colours;
 } __attribute__((packed));
 
 void main(int argc, uint8_t* argv[]) {
@@ -34,14 +34,20 @@ void main(int argc, uint8_t* argv[]) {
         fputs(u8p("iview: unexpected argument\n"), stderr);
         exit(1);
     }
-    ssize_t img_fd = open(argv[1], 0);
-    if (is_error(img_fd)) {
-        fputs(u8p("iview: error opening file\n"), stderr);
-        exit(1);
-    }
     ssize_t fb_fd = open(u8p("/dev/fb0"), 0);
     if (is_error(fb_fd)) {
         fputs(u8p("iview: error opening framebuffer\n"), stderr);
+        exit(1);
+    }
+    struct fb_info fb_info;
+    if (is_error(ioctl(fb_fd, 1, (uint64_t)&fb_info))) {
+        fputs(u8p("iview: error in ioctl\n"), stderr);
+        exit(1);
+    }
+
+    ssize_t img_fd = open(argv[1], 0);
+    if (is_error(img_fd)) {
+        fputs(u8p("iview: error opening file\n"), stderr);
         exit(1);
     }
     struct bmp_file_header file_header_buffer;
@@ -57,18 +63,27 @@ void main(int argc, uint8_t* argv[]) {
         exit(1);
     }
 
-    struct fb_info fb_info;
-    if (is_error(ioctl(fb_fd, 1, (uint64_t)&fb_info))) {
-        fputs(u8p("iview: error in ioctl\n"), stderr);
+    if (bitmap_info_buffer.compression_method != 0) {
+        fputs(u8p("iview: compression not supported\n"), stderr);
         exit(1);
     }
 
     int fb_width = fb_info.fb_width;
     int fb_height = fb_info.fb_height;
     int fb_pitch = fb_info.fb_pitch;
-
-    int width_to_display = fb_width < (int)bitmap_info_buffer.width ? fb_width : bitmap_info_buffer.width;
-    int height_to_display = fb_height < (int)bitmap_info_buffer.height ? fb_height : bitmap_info_buffer.height;
+    
+    bool top_to_bottom;
+    int bitmap_height;
+    if (bitmap_info_buffer.height > 0) {
+        bitmap_height = bitmap_info_buffer.height;
+        top_to_bottom = false;
+    } else {
+        bitmap_height = -bitmap_info_buffer.height;
+        top_to_bottom = true;
+    }
+    int bitmap_width = bitmap_info_buffer.width;
+    int width_to_display = fb_width < bitmap_info_buffer.width ? fb_width : bitmap_width;
+    int height_to_display = fb_height < bitmap_height ? fb_height : bitmap_height;
     int left_margin = (fb_width - width_to_display) / 2;
     int top_margin = (fb_height - height_to_display) / 2;
 
@@ -79,9 +94,10 @@ void main(int argc, uint8_t* argv[]) {
             memset(fb_pixels_buffer, 0, 4 * fb_width);
         } else {
             int bitmap_top = i - top_margin;
+            int bitmap_line = top_to_bottom ? bitmap_top : bitmap_height - 1 - bitmap_top;
             lseek(
                 img_fd,
-                file_header_buffer.pix_array_offset + (bitmap_info_buffer.height - 1 - bitmap_top) * (bitmap_info_buffer.width * 3),
+                file_header_buffer.pix_array_offset + bitmap_line * bitmap_width * 3,
                 SEEK_SET
             );
             read(img_fd, img_pixels_buffer, width_to_display * 3);
@@ -104,6 +120,8 @@ void main(int argc, uint8_t* argv[]) {
         write(fb_fd, fb_pixels_buffer, fb_width * 4);
         lseek(fb_fd, fb_pitch * (i + 1), SEEK_SET);
     }
+    close(img_fd);
+    
     uint8_t buf[1];
     read(0, buf, 1);
     exit(0);
