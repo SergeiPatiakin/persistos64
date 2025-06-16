@@ -25,53 +25,45 @@ struct bmp_bitmap_info {
 	uint32_t important_colours;
 } __attribute__((packed));
 
-void main(int argc, uint8_t* argv[]) {
-    if (argc < 2) {
-        fputs(u8p("iview: expected a filepath argument\n"), stderr);
-        exit(1);
-    }
-    if (argc > 2) {
-        fputs(u8p("iview: unexpected argument\n"), stderr);
-        exit(1);
-    }
-    ssize_t fb_fd = open(u8p("/dev/fb0"), 0);
-    if (is_error(fb_fd)) {
-        fputs(u8p("iview: error opening framebuffer\n"), stderr);
-        exit(1);
-    }
-    struct fb_info fb_info;
-    if (is_error(ioctl(fb_fd, 1, (uint64_t)&fb_info))) {
-        fputs(u8p("iview: error in ioctl\n"), stderr);
-        exit(1);
-    }
+int fb_width;
+int fb_height;
+int fb_pitch;
+ssize_t fb_fd;
+uint8_t *img_pixels_buffer;
+uint8_t *fb_pixels_buffer;
 
-    ssize_t img_fd = open(argv[1], 0);
+
+int view_image(ssize_t img_fd, bool error_ok) {
     if (is_error(img_fd)) {
-        fputs(u8p("iview: error opening file\n"), stderr);
-        exit(1);
+        if (!error_ok) {
+            fputs(u8p("iview: error opening file\n"), stderr);
+        }
+        return 1;
     }
     struct bmp_file_header file_header_buffer;
     read(img_fd, (void*)&file_header_buffer, sizeof(struct bmp_file_header));
     if (file_header_buffer.ident[0] != 'B' || file_header_buffer.ident[1] != 'M') {
-        fputs(u8p("iview: not a BMP file\n"), stderr);
-        exit(1);
+        if (!error_ok) {
+            fputs(u8p("iview: not a BMP file\n"), stderr);
+        }
+        return 2;
     }
     struct bmp_bitmap_info bitmap_info_buffer;
     read(img_fd, (void*)&bitmap_info_buffer, sizeof(struct bmp_bitmap_info));
     if (bitmap_info_buffer.bbp != 24) {
-        fputs(u8p("iview: only 24-bit bitmaps supported\n"), stderr);
-        exit(1);
+        if (!error_ok) {
+            fputs(u8p("iview: only 24-bit bitmaps supported\n"), stderr);
+        }
+        return 3;
     }
 
     if (bitmap_info_buffer.compression_method != 0) {
-        fputs(u8p("iview: compression not supported\n"), stderr);
-        exit(1);
+        if (!is_error) {
+            fputs(u8p("iview: compression not supported\n"), stderr);
+        }
+        return 4;
     }
 
-    int fb_width = fb_info.fb_width;
-    int fb_height = fb_info.fb_height;
-    int fb_pitch = fb_info.fb_pitch;
-    
     bool top_to_bottom;
     int bitmap_height;
     if (bitmap_info_buffer.height > 0) {
@@ -87,8 +79,6 @@ void main(int argc, uint8_t* argv[]) {
     int left_margin = (fb_width - width_to_display) / 2;
     int top_margin = (fb_height - height_to_display) / 2;
 
-    uint8_t *img_pixels_buffer = malloc(width_to_display * 3);
-    uint8_t *fb_pixels_buffer = malloc(fb_width * 4);
     for (int i = 0; i < fb_height; i++) {
         if ((i < top_margin) || (i > top_margin + height_to_display - 1)) {
             memset(fb_pixels_buffer, 0, 4 * fb_width);
@@ -121,8 +111,74 @@ void main(int argc, uint8_t* argv[]) {
         lseek(fb_fd, fb_pitch * (i + 1), SEEK_SET);
     }
     close(img_fd);
-    
-    uint8_t buf[1];
-    read(0, buf, 1);
-    exit(0);
+    return 0;
+}
+
+int main(int argc, uint8_t* argv[]) {
+    if (argc < 2) {
+        fputs(u8p("iview: expected a filepath argument\n"), stderr);
+        exit(1);
+    }
+    if (argc > 2) {
+        fputs(u8p("iview: unexpected argument\n"), stderr);
+        exit(1);
+    }
+    fb_fd = open(u8p("/dev/fb0"), 0);
+    if (is_error(fb_fd)) {
+        fputs(u8p("iview: error opening framebuffer\n"), stderr);
+        exit(1);
+    }
+    struct fb_info fb_info;
+    if (is_error(ioctl(fb_fd, 1, (uint64_t)&fb_info))) {
+        fputs(u8p("iview: error in ioctl\n"), stderr);
+        exit(1);
+    }
+
+    fb_width = fb_info.fb_width;
+    fb_height = fb_info.fb_height;
+    fb_pitch = fb_info.fb_pitch;
+
+    img_pixels_buffer = malloc(fb_width * 3);
+    fb_pixels_buffer = malloc(fb_width * 4);
+
+    ssize_t path_fd = open(argv[1], 0); // Could be a directory or a file
+    if (is_error(path_fd)) {
+        fputs(u8p("iview: error opening file\n"), stderr);
+        exit(1);
+    }
+    uint8_t dents_buf[4096];
+    ssize_t bytes_read = getdents(path_fd, dents_buf, 4096);
+    if (is_error(bytes_read)) {
+        // It was a file. Display single image and exit
+        int result = view_image(path_fd, false);
+        if (result) {
+            exit(result);
+        }
+        uint8_t buf[1];
+        read(0, buf, 1);
+        exit(0);
+    } else {
+        // It was a directory. Show a slideshow
+        uint8_t *dents_buf_cursor = dents_buf;
+        uint8_t path_buf[4096];
+        strcpy(path_buf, argv[1]);
+        uint8_t *path_buf_cursor = path_buf + strlen(argv[1]);
+        *(path_buf_cursor++) = '/';
+        
+        while (dents_buf_cursor < dents_buf + bytes_read) {
+            struct dent_header *header = (struct dent_header*)dents_buf_cursor;
+            memcpy(path_buf_cursor, (void*)header + sizeof(struct dent_header), header->len);
+            *(path_buf_cursor + sizeof(struct dent_header) + header->len) = 0;
+            ssize_t img_fd = open(path_buf, 0);
+            if (is_error(img_fd)) {
+                fputs(u8p("iview: unexpected error opening image\n"), stderr);
+                exit(1);
+            }
+            view_image(img_fd, true);
+            close(img_fd);
+            sleep(5000);
+            dents_buf_cursor += header->len;
+        }
+        return 0;
+    }
 }
