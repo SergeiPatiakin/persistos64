@@ -31,7 +31,8 @@ Download OVMF.fd from e.g. https://github.com/clearlinux/common/blob/master/OVMF
 ### prepare a raw drive image on macOS host
 ```bash
 # Initialize hard drive image
-dd if=/dev/zero of=em/hd.img bs=512 count=100000
+dd if=/dev/zero of=em/hd.img bs=512 count=524288
+dd if=/dev/zero of=em/part.img bs=512 count=260096
 
 # Run a debian docker image to use parted
 docker run -it --mount type=bind,source="$(pwd)"/em,target=/em debian
@@ -48,11 +49,11 @@ unit s
 mklabel gpt
 
 # Make first partition
-# Note: 20127s means make the partition up to sector 20127 inclusive
-mkpart primary 128s 20127s
+# Note: 20127s means make the partition up to sector 262143 inclusive
+mkpart primary 2048s 262143s
 
 # Make second partition
-mkpart primary 20128s 40127s
+mkpart primary 262144s 524254s
 
 # Exit gparted
 
@@ -73,7 +74,7 @@ echo 'Lorem ipsum' > text/lorem
 popd
 
 # Copy partition image into disk image
-dd if=em/part.img of=em/hd2.img seek=128 bs=512 conv=notrunc
+dd if=em/part.img of=em/hd.img seek=2048 bs=512 conv=notrunc
 ```
 
 ### compile QEMU

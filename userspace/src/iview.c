@@ -107,8 +107,8 @@ int view_image(ssize_t img_fd, bool error_ok) {
                 fb_pixels_buffer[4 * j + 3] = 0; // Alpha
             }
         }
+        lseek(fb_fd, fb_pitch * i, SEEK_SET);
         write(fb_fd, fb_pixels_buffer, fb_width * 4);
-        lseek(fb_fd, fb_pitch * (i + 1), SEEK_SET);
     }
     close(img_fd);
     return 0;
