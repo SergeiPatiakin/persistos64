@@ -29,6 +29,16 @@ struct pair {
     struct pair *next_sibling;
 };
 
+void drop_pair(struct pair *pair) {
+    struct pair *child = pair->first_child;
+    while (child) {
+        struct pair *next_child = child->next_sibling;
+        drop_pair(child);
+        child = next_child;
+    }
+    free(pair);
+}
+
 // zms := ' '*
 // Always returns a pair
 struct pair *parse_zms(uint8_t *start, size_t length) {
@@ -308,23 +318,26 @@ void expand_word(struct pair *word_pair, uint8_t *out_buffer) {
             fputs(u8p("shell: parser assertion: unexpected pair type\n"), stderr);
             exit(2);
         }
-        out_buffer[exec_buffer_length + 1] = 0;
+        out_buffer[exec_buffer_length] = 0;
     }
 }
 
 void exec_shell_line(uint8_t *start, size_t length) {
     struct pair *stmt_result = parse_shell_stmt(start, length);
+    uint8_t **exec_argv = NULL;
+    struct redirect_info *redirect_infos = NULL;
+
     if (!stmt_result) {
         fputs(u8p("shell: syntax error\n"), stderr);
         last_exit_code = 1;
-        return;
+        goto finalize;
     }
     if (stmt_result->end != start + length) {
         fputs(u8p("shell: syntax error, unexpected '"), stderr);
         write(2, start + length, 1);
         fputs(u8p("'\n"), stderr);
         last_exit_code = 1;
-        return;
+        goto finalize;
     }
 
     // Count words
@@ -343,12 +356,10 @@ void exec_shell_line(uint8_t *start, size_t length) {
     }
 
     if (num_words == 0) {
-        // No-op
-        free(stmt_result);
-        return;
+        goto finalize;
     }
-    uint8_t **exec_argv = malloc((num_words + 1) * sizeof(void*));
-    struct redirect_info *redirect_infos = malloc(num_redirects * sizeof(struct redirect_info));
+    exec_argv = malloc((num_words + 1) * sizeof(void*));
+    redirect_infos = malloc((num_redirects + 1) * sizeof(struct redirect_info)); // allocate >0
     memset(redirect_infos, 0, num_redirects * sizeof(struct redirect_info));
 
     uint64_t word_index = 0;
@@ -390,11 +401,13 @@ void exec_shell_line(uint8_t *start, size_t length) {
         uint64_t exit_code = 0;
         if (num_words > 2) {
             fputs(u8p("shell: builtin exit can have at most one argument\n"), stderr);
-            exit(1);
+            last_exit_code = 1;
+            goto finalize;
         } else if (num_words > 1) {
             if (parse_n_dec(exec_argv[1], strlen(exec_argv[1]), &exit_code) == 0) {
                 fputs(u8p("shell: failed to parse exit code for exit builtin\n"), stderr);
-                exit(1);
+                last_exit_code = 1;
+                goto finalize;
             };
         }
         exit(exit_code);
@@ -413,18 +426,21 @@ void exec_shell_line(uint8_t *start, size_t length) {
                 exit_on_error = false;
             } else {
                 fputs(u8p("shell: unknown set option\n"), stderr);
-                exit(1);
+                last_exit_code = 1;
+                goto finalize;
             }
         }
     } else if (strcmp(u8p("assert_exit_code"), exec_argv[0]) == 0) {
         uint64_t expected_exit_code = 0;
         if (num_words > 2) {
             fputs(u8p("shell: builtin assert_exit_code can have at most one argument\n"), stderr);
-            exit(1);
+            last_exit_code = 1;
+            return;
         } else if (num_words > 1) {
             if (parse_n_dec(exec_argv[1], strlen(exec_argv[1]), &expected_exit_code) == 0) {
                 fputs(u8p("shell: failed to parse exit code for assert_exit_code builtin\n"), stderr);
-                exit(1);
+                last_exit_code = 1;
+                return;
             };
         }
         if (last_exit_code != expected_exit_code) {
@@ -467,9 +483,19 @@ void exec_shell_line(uint8_t *start, size_t length) {
             }
         }
     }
-    free(stmt_result); // TODO: recursive free
     last_exit_code = child_exit_code;
-    if (child_exit_code && exit_on_error) {
+    
+    finalize:
+    if (exec_argv) {
+        for (int i = 0; i < num_words; i++) {
+            if (exec_argv[i]) free(exec_argv[i]);
+        }
+        free(exec_argv);
+    }
+    if (redirect_infos) free(redirect_infos);
+    if (stmt_result) drop_pair(stmt_result);
+
+    if (last_exit_code && exit_on_error) {
         exit(child_exit_code);
     }
     return;
