@@ -1,7 +1,7 @@
 # Persistos64
 Persistos64 is a hobby operating system for x64
 
-https://github.com/user-attachments/assets/dd18ae70-c1ad-4c91-aac6-fdc6e251b509
+https://github.com/user-attachments/assets/36fb4e8a-0369-40c8-99b8-d8d331d0beb4
 
 ## Features
 ### Physical device drivers
