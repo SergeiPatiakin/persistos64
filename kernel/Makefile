@@ -105,7 +105,7 @@ build/%.s.o: src/%.s Makefile
 	mkdir -p "$$(dirname $@)"
 	$(KAS) $(KASFLAGS) -c $< -o $@
 
-build/persistos.iso: build/persistos build/initrd.bin
+build/persistos.iso: build/persistos build/initrd.bin limine
 	rm -rf iso_root
 	mkdir -p iso_root/boot
 	cp -v build/persistos iso_root/boot/

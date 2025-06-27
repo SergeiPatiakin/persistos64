@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build p64-builder
+        run: |
+          docker build -t p64-builder infra
+      
+      - name: Run p64-builder
+        run: |
+          docker run -d \
+            --name p64-builder-1 \
+            --mount type=bind,source="$(pwd)",target=/code \
+            p64-builder \
+            sleep 100000d
+
+      - name: Build Persistos64 in p64-builder
+        run: |
+          docker exec -i -w /code p64-builder-1 bash -c "make"
+
+      - name: Upload persistos.iso
+        uses: actions/upload-artifact@v4
+        with:
+          name: persistos.iso
+          path: kernel/build/persistos.iso
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          files: |
+            kernel/build/persistos.iso

@@ -32,7 +32,7 @@ void kt_hw_init_main() {
     for (int i = 0; i < num_nvme_devices; i++) {
         nvme_probe_2(&nvme_devices[i]);
     }
-    printk(u8p("Hardware initialized\n"));
+    printk(u8p("Hardware initialized. Press Ctrl+1 for tty1\n"));
     // Sleep forever
     current_task_ts->task_state = TS_WAITING;
     task_yield();
