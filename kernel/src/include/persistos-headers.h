@@ -1,3 +1,5 @@
+// Header files that are shared between the kernel build and userspace build
+
 #ifndef INCLUDE_H
 #define INCLUDE_H
 

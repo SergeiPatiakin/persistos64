@@ -1,3 +1,5 @@
+// Code related to the Global Descriptor Table (GDT)
+
 .text
 .global add_usermode_gdt_entries
 add_usermode_gdt_entries:

@@ -1,3 +1,4 @@
+// Code related to the Interrupt Descriptor Table (IDT)
 #include "lib/cstd.h"
 #include "arch/asm.h"
 #include "arch/idt.h"

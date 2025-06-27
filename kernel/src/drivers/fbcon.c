@@ -1,3 +1,4 @@
+// Driver for the framebuffer console device
 #include <stdint.h>
 #include "drivers/font.h"
 #include "drivers/tty.h"

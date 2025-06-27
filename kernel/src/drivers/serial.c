@@ -1,3 +1,4 @@
+// Driver for the serial port
 #include "serial.h"
 #include "arch/asm.h"
 #include "drivers/tty.h"

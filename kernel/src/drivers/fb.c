@@ -1,3 +1,4 @@
+// Driver for the framebuffer device
 #include <stdint.h>
 #include "fs/vfs.h"
 #include "drivers/device-numbers.h"

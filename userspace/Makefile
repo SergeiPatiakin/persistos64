@@ -84,7 +84,6 @@ EXECUTABLE_FILES = \
 	echo \
 	fault \
 	hd \
-	increment \
     init \
 	iview \
 	kill \
@@ -138,10 +137,6 @@ build/fault: Makefile linker.ld build/fault.c.o $(LIBC_OBJECT_FILES)
 build/hd: Makefile linker.ld build/hd.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"
 	$(LD) build/hd.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
-
-build/increment: Makefile linker.ld build/increment.c.o $(LIBC_OBJECT_FILES)
-	mkdir -p "$$(dirname $@)"
-	$(LD) build/increment.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
 
 build/init: Makefile linker.ld build/init.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"

@@ -1,3 +1,4 @@
+// Trigger a userspace fault (bad instruction, division by zero, bad memory access)
 #include <stdint.h>
 #include <stdbool.h>
 #include "cstd.h"

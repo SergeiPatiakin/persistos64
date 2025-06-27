@@ -1,3 +1,4 @@
+// Write text to stdout
 #include <stdint.h>
 #include <stdbool.h>
 #include "cstd.h"

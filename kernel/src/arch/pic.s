@@ -1,3 +1,5 @@
+// Code related to the Programmable Interrupt Controller (PIC)
+
 .global pic_remap
 .type pic_remap, @function
 pic_remap:

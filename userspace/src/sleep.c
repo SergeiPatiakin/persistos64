@@ -1,3 +1,4 @@
+// Sleep for a given number of milliseconds
 #include <stdint.h>
 #include "cstd.h"
 #include <persistos.h>

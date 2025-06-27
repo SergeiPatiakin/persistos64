@@ -1,5 +1,6 @@
-.text
+// Process scheduler routines that cannot be expressed in C
 
+.text
 .global set_segment_registers_for_userspace
 set_segment_registers_for_userspace:
     mov $0x43, %ax // ring 3 data with bottom 2 bits set for ring 3

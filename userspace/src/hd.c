@@ -1,3 +1,4 @@
+// Show a file in hexidecimal
 #include <stdint.h>
 #include "cstd.h"
 #include <persistos.h>
