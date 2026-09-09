@@ -65,13 +65,20 @@ void cpu_exception_handler(
         uint8_t instruction_address_buf[17];
         uint64_t fault_rip = *((uint64_t*)interrupt_rsp + 10);
         sprintf_uint64(fault_rip, instruction_address_buf);
-
-        printk(u8p("The instruction at 0x"));
+        if (current_task_ts) {
+            printk("[");
+            printk_str(current_task_ts->name);
+            printk_str(":");
+            uint8_t pid_buf[10];
+            sprintf_dec(current_task_ts->pid, pid_buf, 0, 0);
+            printk_str(pid_buf);
+            printk_str("] ");
+        }
+        printk_str(u8p("Instruction at 0x"));
         printk_str(instruction_address_buf);
-        printk_str(u8p(" referenced memory at 0x"));
+        printk_str(error_code & 0x2 ? u8p(" stored") : u8p(" loaded"));
+        printk_str(u8p(" memory at 0x"));
         printk_str(access_address_buf);
-        printk_str(u8p(". The memory could not be "));
-        printk_str(error_code & 0x2 ? u8p("written.") : u8p("read."));
         printk_str(u8p("\n"));
         if (fault_rip > UPPER_HALF_START) {
             panic(u8p("Fault in upper half\n"));
