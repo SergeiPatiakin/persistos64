@@ -21,12 +21,12 @@ uint64_t dmem_used_pages = 0;
 
 void kmem_init() {
     if (hhdm_request.response == NULL) {
-        panic(u8p("No HHDM response\n"));
+        panic("No HHDM response\n");
     }
     hhdm_offset = hhdm_request.response->offset;
 
     if (memmap_request.response == NULL) {
-        panic(u8p("No memmap response\n"));
+        panic("No memmap response\n");
     }
 
     // Choose the largest region for kmem
@@ -42,7 +42,7 @@ void kmem_init() {
         }
     }
     if (largest_region_entry == NULL) {
-        panic(u8p("No usable memory regions found"));
+        panic("No usable memory regions found");
     }
     kmem_start = largest_region_entry->base + hhdm_offset;
     kmem_length = largest_region_entry->length;
@@ -69,7 +69,7 @@ void *kpage_alloc(size_t num_pages) {
     while (true) {
         if (i >= kmem_total_pages) {
             irq_restore(state);
-            panic(u8p("Out of physical memory\n"));
+            panic("Out of physical memory\n");
         }
         if (kmem_page_array[i].status == KPAGE_FREE) {
             consecutive_free++;

@@ -156,7 +156,7 @@ uint64_t handle_syscall(
             *--kernel_first_entry_rsp_2 = *--kernel_first_entry_rsp;
             new_process->kernel_rsp = (uint64_t)kernel_first_entry_rsp_2;
 
-            spinlock_release(&state);
+            spinlock_release(state);
             return new_process->pid;
         }
         case SYSCALL_EXEC: {
@@ -249,7 +249,7 @@ uint64_t handle_syscall(
                 }
             }
             if (heap_range == NULL) {
-                printk(u8p("No heap range found!\n"));
+                printk("No heap range found!\n");
                 return 0;
             }
             if (brk == 0) {
@@ -338,7 +338,7 @@ uint64_t handle_syscall(
                 }
                 return filp->fd;
             }
-            panic(u8p("Unknown lookup status\n"));
+            panic("Unknown lookup status\n");
         }
         case SYSCALL_CLOSE: {
             uint64_t fd = arg3;
@@ -559,9 +559,7 @@ uint64_t handle_syscall(
             );
         }
         default: {
-            printk(u8p("Unrecognized syscall: "));
-            printk_uint64(syscall_number);
-            printk_str(u8p("\n"));
+            printk("Unrecognized syscall: %8X\n", syscall_number);
             return 0;
         }
     }

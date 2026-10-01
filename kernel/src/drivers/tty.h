@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdarg.h>
 #include "lib/cstd.h"
 #include "lib/sync.h"
 #include "keyboard.h"
@@ -55,14 +56,9 @@ ssize_t vt_write(void *dev, uint8_t *buffer, uint64_t offset, size_t length);
 ssize_t vt_read(void *dev, uint8_t *buffer, uint64_t offset, size_t length);
 void vt_update_input(struct vt_device *vt_device, struct keyboard_event keyboard_event);
 
-void printk(uint8_t* data);
-void printk_str(uint8_t* data);
-void panic(uint8_t *message);
-
-void printk_uint8(uint8_t data);
-void printk_uint16(uint16_t data);
-void printk_uint32(uint32_t data);
-void printk_uint64(uint64_t data);
+void printk(char* format_string, ...);
+void printk_guts(char* format_string, va_list *args);
+void panic(char* format_string, ...);
 
 void set_active_vt(struct vt_device *vt);
 

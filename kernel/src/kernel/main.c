@@ -32,7 +32,7 @@ void kt_hw_init_main() {
     for (int i = 0; i < num_nvme_devices; i++) {
         nvme_probe_2(&nvme_devices[i]);
     }
-    printk(u8p("Hardware initialized. Press Ctrl+1 for tty1\n"));
+    printk("Hardware initialized. Press Ctrl+1 for tty1\n");
     // Sleep forever
     current_task_ts->task_state = TS_WAITING;
     task_yield();
@@ -61,9 +61,7 @@ void kmain(void) {
     userspace_init();
 
     if (module_request.response->module_count != 1) {
-        printk(u8p("Found 0x"));
-        printk_uint8(module_request.response->module_count);
-        printk_str(u8p(" limine modules, expected 1\n"));
+        printk("Found 0x%1X limine modules, expected 1\n", module_request.response->module_count);
         halt_forever();
     };
 
@@ -95,7 +93,7 @@ void kmain(void) {
     struct vfs_lookup_result init_lookup_result;
     vfs_resolve(u8p("bin/init"), &init_lookup_result);
     if (init_lookup_result.status != VFS_RESOLVE_SUCCESS_EXISTS) {
-        panic(u8p("init binary not found"));
+        panic("init binary not found");
     }
     struct file init_file = {
         .inode = init_lookup_result.inode,

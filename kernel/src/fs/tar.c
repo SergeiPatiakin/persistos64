@@ -24,7 +24,7 @@ void extract_tar_files(void *tar_file) {
 
         size_t filepath_strlen = strlen(header->name);
         if (filepath_strlen > FILEPATH_MAX_LENGTH) {
-            panic(u8p("File path too long"));
+            panic("File path too long");
         }
         strcpy(filepath_buffer, header->name);
         
@@ -37,7 +37,7 @@ void extract_tar_files(void *tar_file) {
         struct vfs_lookup_result lookup_result;
         vfs_resolve(filepath_buffer, &lookup_result);
         if (lookup_result.status != VFS_RESOLVE_SUCCESS_DOESNT_EXIST) {
-            panic(u8p("Unexpected resolve status while extracting tar"));
+            panic("Unexpected resolve status while extracting tar");
         }
         memset(&filename_buffer, 0, FILEPATH_MAX_LENGTH + 1);
         memcpy(&filename_buffer, lookup_result.name_start, lookup_result.name_length);

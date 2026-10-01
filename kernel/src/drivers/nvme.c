@@ -67,9 +67,7 @@ uint16_t start_command(struct nvme_device *dev) {
 
 void finish_command(struct nvme_device *dev, uint16_t command_id) {
     if (command_id > NVME_MAX_COMMANDS) {
-        printk(u8p("Cannot finish invalid command_id: "));
-        printk_uint16(command_id);
-        printk_str(u8p("\n"));
+        printk("Cannot finish invalid command_id: %2X\n", command_id);
     }
     irq_state state;
     spinlock_acquire(&state);
@@ -197,9 +195,7 @@ void nvme_probe_2(struct nvme_device *nvme_device) {
     uint32_t version = *((uint32_t*)(pci_device->mmio_virt_base + 0x8));
     uint16_t mqes = cap & 0xFFFF;
     if (mqes < NVME_QUEUE_SIZE_MINUS_ONE) {
-        printk(u8p("nvme: CAP.MQES is too small. cap=0x"));
-        printk_uint64(cap);
-        printk_str(u8p("\n"));
+        printk("nvme: CAP.MQES is too small. cap=0x%8X\n", cap);
     }
 
     nvme_device->pci_device = pci_device;
@@ -267,18 +263,14 @@ void nvme_probe_contents(struct nvme_device *dev) {
     // Verify the identify controller command was successful
     uint16_t identify_command_status = ((struct nvme_cq_entry*)(dev->acq))[acq_head].status_field >> 1;
     if (identify_command_status != 0) {
-        printk(u8p("Identify controller command error: "));
-        printk_uint16(identify_command_status);
-        printk_str(u8p("\n"));
+        printk("Identify controller command error: %2X\n", identify_command_status);
         return;
     }
 
     // Verify that this is an I/O controller
     uint8_t cntrltype = *((uint8_t*)(dev->admin_result_buffer) + 111);
     if (cntrltype > 1) {
-        printk(u8p("Bad controller type: "));
-        printk_uint8(cntrltype);
-        printk(u8p("\n"));
+        printk("Bad controller type: %1X\n", cntrltype);
         return;
     }
 
@@ -334,9 +326,7 @@ void nvme_probe_contents(struct nvme_device *dev) {
     // Verify the identify namespace command was successful
     uint16_t identify_ns_command_status = ((struct nvme_cq_entry*)(dev->acq))[acq_head].status_field >> 1;
     if (identify_ns_command_status != 0) {
-        printk(u8p("Identify namespace command error: "));
-        printk_uint16(identify_ns_command_status);
-        printk_str(u8p("\n"));
+        printk("Identify namespace command error: %2X\n", identify_ns_command_status);
         return;
     }
     
@@ -389,9 +379,7 @@ void nvme_probe_contents(struct nvme_device *dev) {
     // Verify the CreateIocq command was successful
     uint16_t create_iocq_command_status = ((struct nvme_cq_entry*)(dev->acq))[acq_head].status_field >> 1;
     if (create_iocq_command_status != 0) {
-        printk(u8p("Create IOCQ command error: "));
-        printk_uint16(create_iocq_command_status);
-        printk_str(u8p("\n"));
+        printk("Create IOCQ command error: %2X\n", create_iocq_command_status);
         return;
     }
 
@@ -434,9 +422,7 @@ void nvme_probe_contents(struct nvme_device *dev) {
     // Verify the CreateIocq command was successful
     uint16_t create_iosq_command_status = ((struct nvme_cq_entry*)(dev->acq))[acq_head].status_field >> 1;
     if (create_iosq_command_status != 0) {
-        printk(u8p("Create IOSQ command error: "));
-        printk_uint16(create_iosq_command_status);
-        printk_str(u8p("\n"));
+        printk("Create IOSQ command error: %2X\n", create_iosq_command_status);
         return;
     }
     // Find partitions on device
@@ -445,9 +431,6 @@ void nvme_probe_contents(struct nvme_device *dev) {
 
 void nvme_handle_interrupt(uint8_t interrupt_line) {
     (void) interrupt_line;
-    // printk("interrupt 0x");
-    // printk_uint8(interrupt_line);
-    // printk("\n");
 
     for (int i = 0; i < num_nvme_devices; i++) {
         struct nvme_device *dev = &nvme_devices[i];
@@ -557,9 +540,7 @@ void nvme_readpage(struct nvme_device *dev, uint32_t lba, void* result_page) {
     // Verify the read command was successful
     uint16_t read_command_status = ((struct nvme_cq_entry*)(dev->iocq))[iocq_head].status_field >> 1;
     if (read_command_status != 0) {
-        printk(u8p("Read command error: "));
-        printk_uint16(read_command_status);
-        printk_str(u8p("\n"));
+        printk("Read command error: %2X\n", read_command_status);
         return;
     }
 }
@@ -639,9 +620,7 @@ void nvme_writepage(struct nvme_device *dev, uint32_t lba, void* content_page) {
     // Verify the write command was successful
     uint16_t write_command_status = ((struct nvme_cq_entry*)(dev->iocq))[iocq_head].status_field >> 1;
     if (write_command_status != 0) {
-        printk(u8p("Write command error: "));
-        printk_uint16(write_command_status);
-        printk_str(u8p("\n"));
+        printk("Write command error: %2X\n", write_command_status);
         return;
     }
 }

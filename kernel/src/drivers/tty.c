@@ -1,5 +1,6 @@
 // Driver for TTY pseudodevices
 #include <stdbool.h>
+#include <stdarg.h>
 #include "arch/asm.h"
 #include "arch/idt.h"
 #include "drivers/device-numbers.h"
@@ -332,7 +333,7 @@ void vt_update_input(struct vt_device *vt_device, struct keyboard_event keyboard
 }
 
 // TODO: go through a ring buffer to allow use in interrupt context
-void printk(uint8_t* data) {
+void printk_line_prefix() {
     uint8_t buf[11];
     sprintf_dec(timer_ticks, buf, '0', 8);
     vt_write(&tty4, u8p("["), 0, 1);
@@ -340,40 +341,86 @@ void printk(uint8_t* data) {
     vt_write(&tty4, u8p("."), 0, 1);
     vt_write(&tty4, buf + 6, 0, 2);
     vt_write(&tty4, u8p("] "), 0, 2);
-    vt_write(&tty4, data, 0, strlen(data));
 }
 
-void printk_str(uint8_t* data) {
-    vt_write(&tty4, data, 0, strlen(data));
+void printk(char* format_string, ...) {
+    va_list args;
+    va_start(args, format_string);
+    printk_guts(format_string, &args);
 }
 
-void printk_uint8(uint8_t data) {
-    uint8_t buffer[3];
-    sprintf_uint8(data, buffer);
-    vt_write(&tty4, buffer, 0 /* dummy */, 2);
+void printk_guts(char* format_string, va_list *args) {
+    char format_code_length = 0; // How many format code characters parsed so far
+    char format_width;
+    printk_line_prefix();
+    for (; *format_string; format_string++) {
+        if (format_code_length == 0) {
+            if (*format_string == '%') {
+                format_code_length = 1;
+            } else {
+                vt_write(&tty4, (uint8_t*)format_string, 0, 1);
+            }
+        } else if (format_code_length == 1) {
+            if (*format_string == '%') {
+                vt_write(&tty4, u8p("%"), 0, 1);
+                format_code_length = 0;
+            } else if (*format_string == 's') {
+                uint8_t *str = va_arg(*args, uint8_t*);
+                vt_write(&tty4, str, 0, strlen(str));
+                format_code_length = 0;
+            } else if (*format_string == '1') {
+                format_code_length = 2;
+                format_width = 1;
+            } else if (*format_string == '2') {
+                format_code_length = 2;
+                format_width = 2;
+            } else if (*format_string == '4') {
+                format_code_length = 2;
+                format_width = 4;
+            } else if (*format_string == '8') {
+                format_code_length = 2;
+                format_width = 8;
+            } else {
+                format_code_length = 0;
+            }
+        } else if (format_code_length == 2) {
+            if (*format_string == 'X') {
+                if (format_width == 1) {
+                    uint8_t num = va_arg(*args, int);
+                    uint8_t buffer[3];
+                    sprintf_uint8(num, buffer);
+                    vt_write(&tty4, buffer, 0, 2);
+                } else if (format_width == 2) {
+                    uint16_t num = va_arg(*args, int);
+                    uint8_t buffer[5];
+                    sprintf_uint16(num, buffer);
+                    vt_write(&tty4, buffer, 0, 4);
+                } else if (format_width == 4) {
+                    uint32_t num = va_arg(*args, int);
+                    uint8_t buffer[9];
+                    sprintf_uint32(num, buffer);
+                    vt_write(&tty4, buffer, 0, 8);
+                } else if (format_width == 8) {
+                    uint64_t num = va_arg(*args, uint64_t);
+                    uint8_t buffer[17];
+                    sprintf_uint64(num, buffer);
+                    vt_write(&tty4, buffer, 0, 16);
+                }
+                format_code_length = 0;
+            } else {
+                format_code_length = 0;
+            }
+        } else if (format_code_length == 3) {
+            // Impossible
+        }
+    }
 }
 
-void printk_uint16(uint16_t data) {
-    uint8_t buffer[5];
-    sprintf_uint16(data, buffer);
-    vt_write(&tty4, buffer, 0 /* dummy */, 4);
-}
 
-void printk_uint32(uint32_t data) {
-    uint8_t buffer[9];
-    sprintf_uint32(data, buffer);
-    vt_write(&tty4, buffer, 0 /* dummy */, 8);
-}
-
-void printk_uint64(uint64_t data) {
-    uint8_t buffer[17];
-    sprintf_uint64(data, buffer);
-    vt_write(&tty4, buffer, 0 /* dummy */, 16);
-}
-
-
-void panic(uint8_t *message) {
-    printk(message);
+void panic(char* format_string, ...) {
+    va_list args;
+    va_start(args, format_string);
+    printk_guts(format_string, &args);
     set_active_vt(&tty4);
     halt_forever();
 }

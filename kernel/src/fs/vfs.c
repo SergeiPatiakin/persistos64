@@ -167,7 +167,7 @@ ssize_t vfs_write(struct file *filp, void *buffer, size_t length) {
         return bytes_written;
     } else if (filp->inode->type == INODE_REGULAR_FILE) {
         if (!filp->inode->superblock) {
-            panic(u8p("vfs_write: no supernode\n")); // Should not happen
+            panic("vfs_write: no supernode\n"); // Should not happen
         }
         ssize_t bytes_written = filp->inode->superblock->ops->write(filp, buffer, length);
         if (bytes_written != -1) {
@@ -175,10 +175,10 @@ ssize_t vfs_write(struct file *filp, void *buffer, size_t length) {
         }
         return bytes_written;
     } else if (filp->inode->type == INODE_DIRECTORY) {
-        printk(u8p("vfs_write: not implemented for directories\n"));
+        printk("vfs_write: not implemented for directories\n");
         return -1;
     }
-    panic(u8p("vfs_write: unknown inode type\n"));
+    panic("vfs_write: unknown inode type\n");
     return -1;
 }
 
@@ -194,15 +194,12 @@ ssize_t vfs_read(struct file *filp, void *buffer, size_t length) {
         return bytes_read;
     } else if (filp->inode->type == INODE_REGULAR_FILE) {
         if (!filp->inode->superblock) {
-            // printk("vfs_read: no supernode\n"); // Should not happen
             return -1;
         }
         return filp->inode->superblock->ops->read(filp, buffer, length);
     } else if (filp->inode->type == INODE_DIRECTORY) {
-        // printk("vfs_read: not implemented for directories\n");
         return -1;
     } else {
-        // printk("vfs_read: unknown inode type\n");
         return -1;
     }
 }

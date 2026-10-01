@@ -49,13 +49,13 @@ void cpu_exception_handler(
     uint64_t arg1
 ) {
     if (interrupt_number == 0) {
-        printk(u8p("Division by zero\n"));
+        printk("Division by zero\n");
         make_zombie(current_task_ts, 128 + 8); // 8 is SIGFPE
         task_yield();
     } else if (interrupt_number == 8) {
-        panic(u8p("Double fault\n"));
+        panic("Double fault\n");
     } else if (interrupt_number == 13) {
-        printk(u8p("General protection fault\n"));
+        printk("General protection fault\n");
         make_zombie(current_task_ts, 128 + 4); // 4 is SIGILL
         task_yield();
     } else if (interrupt_number == 14) {
@@ -65,29 +65,27 @@ void cpu_exception_handler(
         uint8_t instruction_address_buf[17];
         uint64_t fault_rip = *((uint64_t*)interrupt_rsp + 10);
         sprintf_uint64(fault_rip, instruction_address_buf);
-        if (current_task_ts) {
-            printk("[");
-            printk_str(current_task_ts->name);
-            printk_str(":");
-            uint8_t pid_buf[10];
-            sprintf_dec(current_task_ts->pid, pid_buf, 0, 0);
-            printk_str(pid_buf);
-            printk_str("] ");
-        }
-        printk_str(u8p("Instruction at 0x"));
-        printk_str(instruction_address_buf);
-        printk_str(error_code & 0x2 ? u8p(" stored") : u8p(" loaded"));
-        printk_str(u8p(" memory at 0x"));
-        printk_str(access_address_buf);
-        printk_str(u8p("\n"));
+        
+        uint8_t pid_buf[10];
+        sprintf_dec(current_task_ts ? current_task_ts->pid : 0, pid_buf, 0, 0);
+
+        printk(
+            "[%s:%s] Instruction at 0x%s %s memory at 0x%s\n",
+            current_task_ts ? (char*)(current_task_ts->name) : "",
+            pid_buf,
+            instruction_address_buf,
+            error_code & 0x2 ? "stored" : "loaded",
+            access_address_buf
+        );
+
         if (fault_rip > UPPER_HALF_START) {
-            panic(u8p("Fault in upper half\n"));
+            panic("Fault in upper half\n");
         }
 
         make_zombie(current_task_ts, 128 + 11); // 11 is SIGSEGV
         task_yield();
     } else {
-        panic(u8p("Unknown CPU exception"));
+        panic("Unknown CPU exception");
     }
 }
 
@@ -131,7 +129,7 @@ uint64_t hw_interrupt_handler(
         irq_restore(state);
         return retval;
     } else {
-        panic(u8p("Unknown interrupt"));
+        panic("Unknown interrupt");
     }
     return 0; // Unknown interrupt
 }

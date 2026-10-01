@@ -65,7 +65,7 @@ void* slab_alloc(struct slab_allocator *allocator) {
     address = slab_try_alloc(allocator);
     if (!address) {
         irq_restore(state);
-        panic(u8p("Slab allocation unexpectedly failed"));
+        panic("Slab allocation unexpectedly failed");
     }
 
     finalize:
@@ -83,7 +83,7 @@ void slab_free(struct slab_allocator *allocator, void* address) {
     uint16_t slot_number =  page_offset / allocator->object_size;
     uint16_t slot_offset = page_offset % allocator->object_size;
     if (slot_offset != 0) {
-        panic(u8p("invalid slab free"));
+        panic("invalid slab free");
     }
     uint8_t slot_number_div64 = slot_number >> 6;
     uint8_t slot_number_mod64 = slot_number % 64;

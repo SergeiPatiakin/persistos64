@@ -31,9 +31,7 @@ void nvmepart_probe(struct nvme_device *dev) {
     nvme_readpage(dev, 8 * 3, disk_start_buffer + 4096 * 3);
     nvme_readpage(dev, 8 * 4, disk_start_buffer + 4096 * 4);
     if (strncmp(disk_start_buffer + 0x200, u8p("EFI PART"), 8) != 0) {
-        printk(u8p("No GPT found on nvme device 0x"));
-        printk_uint8(dev - nvme_devices);
-        printk_str(u8p("\n"));
+        printk("No GPT found on nvme device 0x%1X\n", dev - nvme_devices);
         return;
     }
     uint32_t num_partition_entries = *((uint32_t*)(disk_start_buffer + 0x250));
@@ -42,7 +40,7 @@ void nvmepart_probe(struct nvme_device *dev) {
         // Offset of partition entry from start of disk
         uint32_t partition_entry_offset = 0x400 + pnum * partition_entry_size;
         if (partition_entry_size + partition_entry_offset > 4096 * 5) {
-            printk(u8p("GPT partition entries go past disk_start_buffer\n"));
+            printk("GPT partition entries go past disk_start_buffer\n");
             return;
         }
         struct gpt_partition_entry *pe = disk_start_buffer + partition_entry_offset;
@@ -56,11 +54,11 @@ void nvmepart_probe(struct nvme_device *dev) {
             continue;
         }
         if (pe->first_lba_high != 0) {
-            printk(u8p("GPT partition start exceeds 2TB\n"));
+            printk("GPT partition start exceeds 2TB\n");
             return;
         }
         if (pe->last_lba_high != 0) {
-            printk(u8p("GPT partition end exceeds 2TB\n"));
+            printk("GPT partition end exceeds 2TB\n");
             return;
         }
         uint16_t device_number = num_nvmepart_devices++;

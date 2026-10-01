@@ -249,7 +249,7 @@ ssize_t sysfs_read(struct file *filp, void *buffer, size_t length) {
         safe_copy_string(&destination, &destination_length, num_string_buffer);
         safe_copy_string(&destination, &destination_length, u8p("\n"));
     } else {
-        panic(u8p("Unknown sysfs inode"));
+        panic("Unknown sysfs inode");
     }
 
     filp->offset = destination - buffer;

@@ -71,7 +71,7 @@ void pci_probe() {
                             mmio_phys_base = (((uint64_t)bar1_readout) << 32) + (bar0_readout & 0xFFFFFFF0);
                             break;
                         default:
-                            printk(u8p("Unsupported BAR type\n"));
+                            printk("Unsupported BAR type\n");
                             continue; 
                     }
 

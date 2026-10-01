@@ -13,7 +13,7 @@
 // Must not be used for memory mapped by Limine, because Limine uses 2MB pages which we don't want to deal with
 void set_page_mapping(void *pml4_page, void* virt_address, void* phys_address, bool is_mmio) {
     if ((uint64_t)phys_address & 4095) {
-        panic(u8p("phys_address must be page-aligned"));
+        panic("phys_address must be page-aligned");
     }
     uint64_t *pml4_entries = pml4_page;
     

@@ -8,6 +8,7 @@
 #include "mm/page.h"
 #include "mm/slab.h"
 #include "mm/userspace.h"
+#include "drivers/tty.h"
 
 struct task_struct *current_task_ts = NULL;
 struct list_head task_struct_lh; // List of task_struct sorted by pid
@@ -50,6 +51,9 @@ void task_yield() {
     } while (t->task_state != TS_RUNNING);
 
     if (t != current_task_ts) {
+        // if (!t->kernel_rsp) {
+        //     panic("Ouch");
+        // }
         switch_to_task(t);
     }
     irq_restore(state);
