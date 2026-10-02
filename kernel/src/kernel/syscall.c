@@ -93,6 +93,11 @@ uint64_t handle_syscall(
             new_process->pml4_page = NULL;
             new_process->kernel_entry_rsp = 0;
             init_list(&new_process->memory_ranges_lh);
+            
+            // Avoid interrupt switching task while we're building the new memory state
+            irq_state state;
+            spinlock_acquire(&state);
+
             list_add_tail(&new_process->task_struct_le, &task_struct_lh);
             setup_kernelspace_memory(new_process);
             init_list(&new_process->files_lh);
@@ -151,6 +156,7 @@ uint64_t handle_syscall(
             *--kernel_first_entry_rsp_2 = *--kernel_first_entry_rsp;
             new_process->kernel_rsp = (uint64_t)kernel_first_entry_rsp_2;
 
+            spinlock_release(&state);
             return new_process->pid;
         }
         case SYSCALL_EXEC: {
