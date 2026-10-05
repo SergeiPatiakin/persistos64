@@ -85,7 +85,7 @@ override HEADER_DEPS := $(addprefix build/,$(CFILES:.c=.c.d) $(ASFILES:.s=.s.d))
 
 # Default target.
 .PHONY: all
-all: build/persistos.iso
+all: build/persistos.img
 
 # Link rules for the final executable.
 build/persistos: Makefile linker.ld $(OBJ)
@@ -105,8 +105,8 @@ build/%.s.o: src/%.s Makefile
 	mkdir -p "$$(dirname $@)"
 	$(KAS) $(KASFLAGS) -c $< -o $@
 
-build/persistos.iso: build/persistos build/initrd.bin limine
-	./build-persistos-iso.sh
+build/persistos.img: build/persistos build/initrd.bin limine
+	./build-persistos-img.sh
 
 .PHONY: limine
 limine:

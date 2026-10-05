@@ -95,7 +95,7 @@ qemu-system-x86_64 \
 -m 512 \
 -nic user \
 -boot menu=on \
--drive if=none,id=usbstick,format=raw,file=kernel/build/persistos.iso \
+-drive if=none,id=usbstick,format=raw,file=kernel/build/persistos.img \
 -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=usbstick \
 -drive file=em/hd.img,if=none,id=nvm,format=raw \
 -device nvme,serial=deadbeef,drive=nvm \
@@ -131,10 +131,10 @@ gdb userspace/build/shell -ex 'target remote host.docker.internal:1234' -ex c
 ### run Persistos64 on EC2
 - Create a Linux EC2 instance. Use a root EBS volume from Debian 12 AMI
 - Attach a Persistos EBS volume
-- Scp `persistos.iso` onto the instance
-- Copy `persistos.iso` to the Persistos EBS volume, e.g:
+- Scp `persistos.img` onto the instance
+- Copy `persistos.img` to the Persistos EBS volume, e.g:
 ```bash
-sudo dd if=persistos.iso of=/dev/nvme1n1
+sudo dd if=persistos.img of=/dev/nvme1n1
 ```
 - Detach the Persistos EBS volume from the Linux EC2 instance
 - Create a new PersistOS instance. Choose some throwaway initial AMI

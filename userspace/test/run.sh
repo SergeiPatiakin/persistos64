@@ -108,4 +108,4 @@ set -e
 echo test_sleep_smoke
 sleep 10
 
-echo All tests successful
+echo All tests passed
