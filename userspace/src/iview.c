@@ -59,7 +59,7 @@ int view_image(ssize_t img_fd, bool error_ok) {
     }
 
     if (bitmap_info_buffer.compression_method != 0) {
-        if (!is_error) {
+        if (!error_ok) {
             fputs(u8p("iview: compression not supported\n"), stderr);
         }
         return 4;
