@@ -91,14 +91,12 @@ void nvmepart_mbr_probe(struct nvme_device *dev, void *disk_start_buffer) {
     for (uint32_t pnum = 0; pnum < 4; pnum++) {
         uint8_t status = *((uint8_t*)(disk_start_buffer + 0x1BE + 16 * pnum));
         if (!(status & 0x80)) {
-            printk("mbr_part status=%1X inactive\n", status);
             continue;
         }
         uint32_t first_lba;
         uint32_t num_sectors;
         memcpy(&first_lba, disk_start_buffer + 0x1BE + 16 * pnum + 0x08, 4);
         memcpy(&num_sectors, disk_start_buffer + 0x1BE + 16 * pnum + 0x0C, 4);
-        // printk("mbr_part status=%1X first_lba=%4X num_sectors=%4X\n", status, first_lba, num_sectors);
         uint16_t device_number = num_nvmepart_devices++;
         struct nvmepart_device *partition = &nvmepart_devices[device_number];
         partition->nvme_device = dev;

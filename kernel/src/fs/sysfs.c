@@ -6,6 +6,7 @@
 #include "drivers/pci.h"
 #include "drivers/nvme.h"
 #include "drivers/tty.h"
+#include "kernel/limine-requests.h"
 #include "lib/cstd.h"
 #include "mm/kmem.h"
 #include "mm/slab.h"
@@ -20,6 +21,8 @@ struct dentry sysfs_memory_dentry;
 struct inode sysfs_memory_inode;
 struct dentry sysfs_nvme_dentry;
 struct inode sysfs_nvme_inode;
+struct dentry sysfs_cmdline_dentry;
+struct inode sysfs_cmdline_inode;
 
 ssize_t sysfs_mount(struct inode *device_inode, struct dentry *mountpoint_dentry) {
     (void) device_inode;
@@ -61,6 +64,14 @@ void sysfs_init() {
     strcpy(sysfs_nvme_dentry.name, u8p("nvme"));
     list_add_tail(&sysfs_nvme_dentry.dentry_le, &sysfs_root_inode.dentry_lh);
     sysfs_nvme_dentry.inode = &sysfs_nvme_inode;
+
+    sysfs_cmdline_inode.type = INODE_REGULAR_FILE;
+    sysfs_cmdline_inode.file_length = 10;
+    sysfs_cmdline_inode.superblock = &sysfs_superblock;
+
+    strcpy(sysfs_cmdline_dentry.name, u8p("cmdline"));
+    list_add_tail(&sysfs_cmdline_dentry.dentry_le, &sysfs_root_inode.dentry_lh);
+    sysfs_cmdline_dentry.inode = &sysfs_cmdline_inode;
 
     struct vfs_lookup_result sys_resolve_result;
     vfs_resolve(u8p("sys"), &sys_resolve_result);
@@ -247,6 +258,13 @@ ssize_t sysfs_read(struct file *filp, void *buffer, size_t length) {
         safe_copy_string(&destination, &destination_length, u8p("\nused_memory_kib = "));
         sprintf_dec(kmem_used_pages * 4, num_string_buffer, 0, 0);
         safe_copy_string(&destination, &destination_length, num_string_buffer);
+        safe_copy_string(&destination, &destination_length, u8p("\n"));
+    } else if (filp->inode == &sysfs_cmdline_inode) {
+        uint8_t *cmdline = "";
+        if (kernel_file_request.response->kernel_file->cmdline) {
+            cmdline = kernel_file_request.response->kernel_file->cmdline;
+        }
+        safe_copy_string(&destination, &destination_length, cmdline);
         safe_copy_string(&destination, &destination_length, u8p("\n"));
     } else {
         panic("Unknown sysfs inode");

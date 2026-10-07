@@ -16,4 +16,7 @@ extern volatile struct limine_memmap_request memmap_request;
 __attribute__((section(".requests")))
 extern volatile struct limine_module_request module_request;
 
+__attribute__((section(".requests")))
+extern volatile struct limine_kernel_file_request kernel_file_request;
+
 #endif
