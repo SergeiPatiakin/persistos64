@@ -15,10 +15,18 @@ void ramfs_init() {
     slab_allocator_init(&ramfs_cluster_allocator);
 }
 
-ssize_t ramfs_mount(struct inode *device_inode, struct dentry *mountpoint_inode) {
+ssize_t ramfs_mount(struct inode *device_inode, struct dentry *mountpoint_dentry) {
     (void) device_inode;
-    (void) mountpoint_inode;
+    (void) mountpoint_dentry;
     return RAMFS_MOUNT_NOT_IMPLEMENTED;
+}
+
+ssize_t ramfs_unmount(struct dentry *mountpoint_dentry) {
+    if (!mountpoint_dentry->mounted_inode) {
+        return -1;
+    }
+    mountpoint_dentry->mounted_inode = NULL;
+    return 0;
 }
 
 void ramfs_lookup(struct inode *file_inode) {
@@ -200,6 +208,7 @@ ssize_t ramfs_set_size(struct file *filp, size_t size) {
 
 struct filesystem_ops ramfs_superblock_ops = {
     .mount = ramfs_mount,
+    .unmount = ramfs_unmount,
     .lookup = ramfs_lookup,
     .create_file_inode = ramfs_create_file_inode,
     .create_dir_inode = ramfs_create_dir_inode,

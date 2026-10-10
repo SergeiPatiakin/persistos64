@@ -95,7 +95,8 @@ EXECUTABLE_FILES = \
 	sleep \
 	shell \
 	touch \
-	truncate
+	truncate \
+	umount
 EXECUTABLE_TARGETS = $(addprefix build/, $(EXECUTABLE_FILES))
 EXECUTABLE_TARGETS_RELPATHS = $(addprefix bin/, $(EXECUTABLE_FILES))
 
@@ -189,6 +190,10 @@ build/touch: Makefile linker.ld build/touch.c.o $(LIBC_OBJECT_FILES)
 build/truncate: Makefile linker.ld build/truncate.c.o $(LIBC_OBJECT_FILES)
 	mkdir -p "$$(dirname $@)"
 	$(LD) build/truncate.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
+
+build/umount: Makefile linker.ld build/umount.c.o $(LIBC_OBJECT_FILES)
+	mkdir -p "$$(dirname $@)"
+	$(LD) build/umount.c.o $(LIBC_OBJECT_FILES) $(LDFLAGS) -o $@
 
 # Compilation rules for *.s files.
 build/%.s.o: src/%.s Makefile

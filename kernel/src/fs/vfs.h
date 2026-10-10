@@ -23,6 +23,7 @@ struct task_struct;
 struct filesystem_ops {
     // Returns error code
     ssize_t (*mount)(struct inode *device_inode, struct dentry *mountpoint_dentry);
+    ssize_t (*unmount)(struct dentry *mountpoint_dentry);
     void (*lookup)(struct inode *inode);
     // Returns error code
     ssize_t (*create_file_inode)(

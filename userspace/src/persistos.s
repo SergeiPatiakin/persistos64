@@ -198,3 +198,12 @@ ioctl:
     movq $22, %rdi
     int $0x80
     retq
+
+.global umount
+umount:
+    movq %rdx, %rcx
+    movq %rsi, %rdx
+    movq %rdi, %rsi
+    movq $23, %rdi
+    int $0x80
+    retq

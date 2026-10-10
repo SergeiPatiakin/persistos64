@@ -40,6 +40,7 @@
 #define SYSCALL_MOUNT 20
 #define SYSCALL_PAUSE 21
 #define SYSCALL_IOCTL 22
+#define SYSCALL_UMOUNT 23
 
 uint64_t handle_syscall(
     uint64_t interrupt_rsp,
@@ -561,6 +562,18 @@ uint64_t handle_syscall(
                 filp->inode->device,
                 cmd,
                 arg
+            );
+        }
+        case SYSCALL_UMOUNT: {
+            uint8_t *mountpoint_path = (uint8_t*)arg3; // Unsafe
+            
+            struct vfs_lookup_result mountpoint_lookup_result;
+            vfs_resolve(mountpoint_path, &mountpoint_lookup_result);
+            if (mountpoint_lookup_result.status != VFS_RESOLVE_SUCCESS_EXISTS) {
+                return -1;
+            }
+            return mountpoint_lookup_result.inode->superblock->ops->unmount(
+                mountpoint_lookup_result.dentry
             );
         }
         default: {

@@ -80,6 +80,14 @@ ssize_t exfat_mount(struct inode *device_inode, struct dentry *mountpoint_dentry
     return 0;
 }
 
+ssize_t exfat_unmount(struct dentry *mountpoint_dentry) {
+    if (!mountpoint_dentry->mounted_inode) {
+        return -1;
+    }
+    mountpoint_dentry->mounted_inode = NULL;
+    return 0;
+}
+
 void exfat_lookup(struct inode *inode) {
     struct exfat_inode *exfat_inode = inode->private;
     if (!exfat_inode->load_needed) {
@@ -435,6 +443,7 @@ ssize_t exfat_create_dev_inode(
 
 struct filesystem_ops exfat_superblock_ops = {
     .mount = exfat_mount,
+    .unmount = exfat_unmount,
     .lookup = exfat_lookup,
     .create_file_inode = exfat_create_file_inode,
     .create_dir_inode = exfat_create_dir_inode,

@@ -30,6 +30,14 @@ ssize_t sysfs_mount(struct inode *device_inode, struct dentry *mountpoint_dentry
     return 0;
 }
 
+ssize_t sysfs_unmount(struct dentry *mountpoint_dentry) {
+    if (!mountpoint_dentry->mounted_inode) {
+        return -1;
+    }
+    mountpoint_dentry->mounted_inode = NULL;
+    return 0;
+}
+
 void sysfs_init() {
     sysfs_superblock.device = NULL;
     sysfs_superblock.device_ops = NULL;
@@ -288,6 +296,7 @@ ssize_t sysfs_set_size(struct file *filp, size_t size) {
 
 struct filesystem_ops sysfs_superblock_ops = {
     .mount = sysfs_mount,
+    .unmount = sysfs_unmount,
     .lookup = sysfs_lookup,
     .create_file_inode = sysfs_create_file_inode,
     .create_dir_inode = sysfs_create_dir_inode,
