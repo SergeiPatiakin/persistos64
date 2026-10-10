@@ -35,7 +35,7 @@ struct loader_result {
 
 void userspace_init();
 void free_userspace_memory(struct task_struct *process);
-void load_elf64(struct file *filp, struct loader_result *loader_result_out);
+ssize_t load_elf64(struct file *filp, struct loader_result *loader_result_out);
 void* map_user_page(struct task_struct *process, void* user_space_address);
 
 /* 64-bit ELF base types. */

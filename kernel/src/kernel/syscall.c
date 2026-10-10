@@ -214,7 +214,12 @@ uint64_t handle_syscall(
                 .inode = lookup_result.inode,
                 .offset = 0,
             };
-            load_elf64(&init_file, &loader_result); // Unsafe
+            ssize_t load_elf64_result = load_elf64(&init_file, &loader_result);
+            if (load_elf64_result < 0) {
+                make_zombie(current_task_ts, 8); // 8 is ENOEXEC
+                task_yield();
+                return 0;
+            }
             load_cr3_from(current_task_ts);
 
             // Apply address delta in stack_buffer

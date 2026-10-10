@@ -85,9 +85,18 @@ void free_userspace_memory(struct task_struct *process) {
 
 // Load ELF64 to current process
 // Returns 0 on success
-void load_elf64(struct file *filp, struct loader_result *loader_result_out) {
+ssize_t load_elf64(struct file *filp, struct loader_result *loader_result_out) {
     struct elf64_hdr elf_file_header;
-    vfs_read(filp, &elf_file_header, sizeof(struct elf64_hdr));
+    ssize_t header_read_result = vfs_read(filp, &elf_file_header, sizeof(struct elf64_hdr));
+    if (header_read_result < 0) {
+        return header_read_result;
+    }
+    if (header_read_result < (ssize_t) sizeof(struct elf64_hdr)) {
+        return -1;
+    }
+    if (strncmp(elf_file_header.e_ident, u8p("\x7f" "ELF"), 4) != 0) {
+        return -2;
+    }
     
     void *largest_end_address = NULL;
     for (uint32_t i = 0; i < elf_file_header.e_phnum; i++) {
@@ -134,4 +143,5 @@ void load_elf64(struct file *filp, struct loader_result *loader_result_out) {
 
     loader_result_out->user_entry_rip = elf_file_header.e_entry;
     loader_result_out->user_entry_rsp = 0x0000800000000000;
+    return 0;
 }

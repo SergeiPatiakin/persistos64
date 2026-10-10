@@ -100,7 +100,10 @@ void kmain(void) {
         .offset = 0,
     };
     struct loader_result init_load_result;
-    load_elf64(&init_file, &init_load_result);
+    ssize_t load_elf64_result = load_elf64(&init_file, &init_load_result);
+    if (load_elf64_result < 0) {
+        panic("failed to load init binary: %4X", (uint64_t)load_elf64_result);
+    }
     uint64_t *init_first_entry_rsp = (uint64_t*)(init_process->kernel_entry_rsp);
     // userspace stack
     *((void**)(init_load_result.user_entry_rsp - 16)) = (void*)(init_load_result.user_entry_rsp - 8);
