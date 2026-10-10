@@ -80,8 +80,7 @@ ssize_t exfat_mount(struct inode *device_inode, struct dentry *mountpoint_dentry
     return 0;
 }
 
-void exfat_lookup(struct inode *inode, struct dentry *dentry) {
-    (void) dentry;
+void exfat_lookup(struct inode *inode) {
     struct exfat_inode *exfat_inode = inode->private;
     if (!exfat_inode->load_needed) {
         return;

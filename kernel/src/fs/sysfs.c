@@ -81,9 +81,8 @@ void sysfs_init() {
     sysfs_mount(NULL, sys_resolve_result.dentry);
 }
 
-void sysfs_lookup(struct inode *file_inode, struct dentry *dentry) {
+void sysfs_lookup(struct inode *file_inode) {
     (void) file_inode;
-    (void) dentry;
 }
 
 ssize_t sysfs_create_file_inode(

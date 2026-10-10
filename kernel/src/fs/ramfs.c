@@ -21,9 +21,8 @@ ssize_t ramfs_mount(struct inode *device_inode, struct dentry *mountpoint_inode)
     return RAMFS_MOUNT_NOT_IMPLEMENTED;
 }
 
-void ramfs_lookup(struct inode *file_inode, struct dentry *dentry) {
+void ramfs_lookup(struct inode *file_inode) {
     (void) file_inode;
-    (void) dentry;
 }
 
 ssize_t ramfs_create_file_inode(
