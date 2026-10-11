@@ -9,6 +9,7 @@
 #include "fs/tar.h"
 #include "fs/vfs.h"
 #include "fs/exfat.h"
+#include "fs/sysfs.h"
 #include "include/persistos-headers.h"
 #include "lib/list.h"
 #include "kernel/scheduler.h"
@@ -517,9 +518,11 @@ uint64_t handle_syscall(
             uint8_t *fs_type = (uint8_t*)arg5; // Unsafe
             
             struct vfs_lookup_result device_lookup_result;
-            vfs_resolve(device_path, &device_lookup_result);
-            if (device_lookup_result.status != VFS_RESOLVE_SUCCESS_EXISTS) {
-                return -1;
+            if (device_path) {
+                vfs_resolve(device_path, &device_lookup_result);
+                if (device_lookup_result.status != VFS_RESOLVE_SUCCESS_EXISTS) {
+                    return -1;
+                }
             }
 
             struct vfs_lookup_result mountpoint_lookup_result;
@@ -533,7 +536,15 @@ uint64_t handle_syscall(
             }
 
             if (strcmp(fs_type, u8p("exfat")) == 0) {
+                if (!device_path) {
+                    return -5;
+                }
                 return exfat_superblock_ops.mount(device_lookup_result.inode, mountpoint_lookup_result.dentry);
+            } else if (strcmp(fs_type, u8p("sysfs")) == 0) {
+                if (device_path) {
+                    return -6;
+                }
+                return sysfs_superblock_ops.mount(device_lookup_result.inode, mountpoint_lookup_result.dentry);
             } else {
                 return -4;
             }
