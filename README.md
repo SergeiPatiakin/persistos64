@@ -17,6 +17,7 @@ https://github.com/user-attachments/assets/36fb4e8a-0369-40c8-99b8-d8d331d0beb4
 - exfat
 - initramfs
 - sysfs
+- DOS Partition Table (MBR)
 - GUID Partition Table (GPT)
 ### Processes
 - ELF64 loader
