@@ -156,6 +156,4 @@ ssize_t vfs_ftruncate(struct file *filp, size_t size);
 struct file *filp_find(struct task_struct *process, uint32_t fd);
 struct file *filp_insert_point_find(struct task_struct *process, uint32_t fd);
 
-extern struct inode *vfs_sys_dir_inode;
-
 #endif

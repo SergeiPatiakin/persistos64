@@ -14,7 +14,6 @@ struct slab_allocator file_allocator = SLAB_OF(struct file);
 struct dentry vfs_root_dentry;
 struct inode vfs_root_inode;
 struct inode *vfs_dev_dir_inode;
-struct inode *vfs_sys_dir_inode;
 struct superblock vfs_root_superblock;
 struct ramfs_superblock ramfs_root_superblock;
 
@@ -34,11 +33,10 @@ void vfs_init() {
 
     vfs_root_dentry.inode = &vfs_root_inode;
     vfs_root_dentry.mounted_inode = NULL;
-    strcpy(&vfs_root_dentry.name, "root_dummy");
+    strcpy(vfs_root_dentry.name, u8p("root_dummy"));
     init_list(&vfs_root_dentry.dentry_le);
 
     vfs_dev_dir_inode = vfs_mkdir(&vfs_root_inode, u8p("dev"));
-    vfs_sys_dir_inode = vfs_mkdir(&vfs_root_inode, u8p("sys"));
 }
 
 // Create file inode

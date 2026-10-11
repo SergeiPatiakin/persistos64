@@ -80,13 +80,6 @@ void sysfs_init() {
     strcpy(sysfs_cmdline_dentry.name, u8p("cmdline"));
     list_add_tail(&sysfs_cmdline_dentry.dentry_le, &sysfs_root_inode.dentry_lh);
     sysfs_cmdline_dentry.inode = &sysfs_cmdline_inode;
-
-    struct vfs_lookup_result sys_resolve_result;
-    vfs_resolve(u8p("sys"), &sys_resolve_result);
-    if (sys_resolve_result.status != VFS_RESOLVE_SUCCESS_EXISTS) {
-        halt_forever();
-    }
-    sysfs_mount(NULL, sys_resolve_result.dentry);
 }
 
 void sysfs_lookup(struct inode *file_inode) {
@@ -267,9 +260,9 @@ ssize_t sysfs_read(struct file *filp, void *buffer, size_t length) {
         safe_copy_string(&destination, &destination_length, num_string_buffer);
         safe_copy_string(&destination, &destination_length, u8p("\n"));
     } else if (filp->inode == &sysfs_cmdline_inode) {
-        uint8_t *cmdline = "";
+        uint8_t *cmdline = u8p("");
         if (kernel_file_request.response->kernel_file->cmdline) {
-            cmdline = kernel_file_request.response->kernel_file->cmdline;
+            cmdline = u8p(kernel_file_request.response->kernel_file->cmdline);
         }
         safe_copy_string(&destination, &destination_length, cmdline);
         safe_copy_string(&destination, &destination_length, u8p("\n"));

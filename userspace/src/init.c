@@ -32,6 +32,13 @@ void main() {
     open(u8p("dev/tty1"), 0);
     exec_loop();
 
+    if (is_error(mkdir("sys"))) {
+        puts(u8p("init: could not create /sys\n"));
+    };
+    if (is_error(mount(NULL, "sys", "sysfs"))) {
+        puts(u8p("init: could not mount sysfs\n"));
+    }
+
     puts(u8p("Persistos64 on tty1\n"));
     exec_shell();
 
