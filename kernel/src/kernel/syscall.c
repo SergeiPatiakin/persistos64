@@ -42,6 +42,7 @@
 #define SYSCALL_PAUSE 21
 #define SYSCALL_IOCTL 22
 #define SYSCALL_UMOUNT 23
+#define SYSCALL_SWITCH_ROOT 24
 
 uint64_t handle_syscall(
     uint64_t interrupt_rsp,
@@ -75,6 +76,9 @@ uint64_t handle_syscall(
         }
         case SYSCALL_EXIT: {
             uint8_t exit_code = arg3;
+            if (current_task_ts->pid == 1) {
+                panic("init process exited with 0x%1X", exit_code);
+            }
             make_zombie(current_task_ts, exit_code);
             task_yield();
             // No return
@@ -587,9 +591,19 @@ uint64_t handle_syscall(
                 mountpoint_lookup_result.dentry
             );
         }
+        case SYSCALL_SWITCH_ROOT: {
+            uint8_t *mountpoint_path = (uint8_t*)arg3; // Unsafe
+            
+            struct vfs_lookup_result mountpoint_lookup_result;
+            vfs_resolve(mountpoint_path, &mountpoint_lookup_result);
+            if (mountpoint_lookup_result.status != VFS_RESOLVE_SUCCESS_EXISTS) {
+                return -1;
+            }
+            return vfs_switch_root(mountpoint_lookup_result.dentry);
+        }
         default: {
             printk("Unrecognized syscall: %8X\n", syscall_number);
             return 0;
         }
     }
-}
+}   

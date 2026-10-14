@@ -3,6 +3,7 @@
 #include "drivers/device-numbers.h"
 #include "mem.h"
 #include "fs/vfs.h"
+#include "fs/sysfs.h"
 #include "lib/cstd.h"
 
 struct inode *dev_mem_inode;
@@ -22,7 +23,7 @@ ssize_t dev_mem_write(void *dev, uint8_t* buffer, uint64_t offset, size_t length
 
 void dev_mem_init() {
     dev_mem_inode = vfs_mknod(
-        vfs_dev_dir_inode,
+        &sysfs_dev_inode,
         u8p("mem"),
         DEVICE_MEM,
         1,

@@ -2,6 +2,7 @@
 #include "drivers/device-numbers.h"
 #include "drivers/zero.h"
 #include "fs/vfs.h"
+#include "fs/sysfs.h"
 #include "lib/cstd.h"
 
 struct inode *dev_zero_inode;
@@ -27,7 +28,7 @@ ssize_t dev_zero_write(void *dev, uint8_t* buffer, uint64_t offset, size_t lengt
 
 void dev_zero_init() {
     dev_zero_inode = vfs_mknod(
-        vfs_dev_dir_inode,
+        &sysfs_dev_inode,
         u8p("zero"),
         DEVICE_ZERO,
         1,

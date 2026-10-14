@@ -8,6 +8,7 @@
 #include "drivers/tty.h"
 #include "kernel/limine-requests.h"
 #include "lib/cstd.h"
+#include "lib/list.h"
 #include "mm/kmem.h"
 #include "mm/slab.h"
 
@@ -23,6 +24,8 @@ struct dentry sysfs_nvme_dentry;
 struct inode sysfs_nvme_inode;
 struct dentry sysfs_cmdline_dentry;
 struct inode sysfs_cmdline_inode;
+struct dentry sysfs_dev_dentry;
+struct inode sysfs_dev_inode;
 
 ssize_t sysfs_mount(struct inode *device_inode, struct dentry *mountpoint_dentry) {
     (void) device_inode;
@@ -80,6 +83,15 @@ void sysfs_init() {
     strcpy(sysfs_cmdline_dentry.name, u8p("cmdline"));
     list_add_tail(&sysfs_cmdline_dentry.dentry_le, &sysfs_root_inode.dentry_lh);
     sysfs_cmdline_dentry.inode = &sysfs_cmdline_inode;
+
+    sysfs_dev_inode.type = INODE_DIRECTORY;
+    sysfs_dev_inode.file_length = 10;
+    sysfs_dev_inode.superblock = &sysfs_superblock;
+    init_list(&sysfs_dev_inode.dentry_lh);
+
+    strcpy(sysfs_dev_dentry.name, u8p("dev"));
+    list_add_tail(&sysfs_dev_dentry.dentry_le, &sysfs_root_inode.dentry_lh);
+    sysfs_dev_dentry.inode = &sysfs_dev_inode;
 }
 
 void sysfs_lookup(struct inode *file_inode) {
@@ -119,14 +131,16 @@ ssize_t sysfs_create_dev_inode(
     struct inode *out_inode,
     struct dentry *out_dentry
 ) {
-    (void) parent_dir;
-    (void) device_type;
-    (void) device_number;
-    (void) device_ops;
-    (void) device;
-    (void) out_inode;
-    (void) out_dentry;
-    return -1;
+    out_inode->type = INODE_DEVICE;
+    out_inode->superblock = parent_dir->superblock;
+    out_inode->device_type = device_type;
+    out_inode->device_number = device_number;
+    out_inode->device_ops = device_ops;
+    out_inode->device = device;
+    out_dentry->inode = out_inode;
+    out_dentry->mounted_inode = NULL;
+    list_add_tail(&out_dentry->dentry_le, &parent_dir->dentry_lh);
+    return 0;
 }
 
 // Mutates destination and destination_length

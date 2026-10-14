@@ -40,9 +40,10 @@ bool is_error(ssize_t x);
 /* 17 */ ssize_t gettents(uint8_t *buf, size_t size);
 /* 18 */ ssize_t kill(uint64_t pid, uint64_t sig);
 /* 19 */ ssize_t sleep(uint64_t millis);
-/* 20 */ ssize_t mount(uint8_t *dev_name, uint8_t *dir_name, uint8_t *type);
+/* 20 */ ssize_t mount(uint8_t *dev_name, uint8_t *mountpoint_path, uint8_t *type);
 /* 21 */ ssize_t pause();
 /* 22 */ ssize_t ioctl(uint64_t fd, uint64_t cmd, uint64_t arg);
-/* 23 */ ssize_t umount(uint8_t *dir_name);
+/* 23 */ ssize_t umount(uint8_t *mountpoint_path);
+/* 24 */ ssize_t switch_root(uint8_t *new_root_path);
 
 #endif

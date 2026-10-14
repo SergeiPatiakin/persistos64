@@ -5,6 +5,7 @@
 #include "drivers/nvme.h"
 #include "drivers/tty.h"
 #include "fs/vfs.h"
+#include "fs/sysfs.h"
 #include "mm/kmem.h"
 #include "nvmepart.h"
 
@@ -77,7 +78,7 @@ void nvmepart_gpt_probe(struct nvme_device *dev, void *disk_start_buffer) {
         name_buffer[4] = '0' + (dev - nvme_devices); // TODO: proper name logic for >9 devices
         name_buffer[6] = '1' + pnum; // TODO: proper name logic for >9 partitions
         vfs_mknod(
-            vfs_dev_dir_inode,
+            &sysfs_dev_inode,
             name_buffer,
             DEVICE_NVMEPART,
             device_number,
@@ -119,7 +120,7 @@ void nvmepart_mbr_probe(struct nvme_device *dev, void *disk_start_buffer) {
         name_buffer[4] = '0' + (dev - nvme_devices); // TODO: proper name logic for >9 devices
         name_buffer[6] = '1' + pnum; // TODO: proper name logic for >9 partitions
         vfs_mknod(
-            vfs_dev_dir_inode,
+            &sysfs_dev_inode,
             name_buffer,
             DEVICE_NVMEPART,
             device_number,

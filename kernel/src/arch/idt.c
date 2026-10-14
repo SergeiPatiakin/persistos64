@@ -55,7 +55,24 @@ void cpu_exception_handler(
     } else if (interrupt_number == 8) {
         panic("Double fault\n");
     } else if (interrupt_number == 13) {
-        printk("General protection fault\n");
+        uint8_t pid_buf[10];
+        sprintf_dec(current_task_ts ? current_task_ts->pid : 0, pid_buf, 0, 0);
+
+        uint8_t instruction_address_buf[17];
+        uint64_t fault_rip = *((uint64_t*)interrupt_rsp + 10);
+        sprintf_uint64(fault_rip, instruction_address_buf);
+
+        printk(
+            "[%s:%s] General protection fault at 0x%s\n",
+            current_task_ts ? (char*)(current_task_ts->name) : "",
+            pid_buf,
+            instruction_address_buf
+        );
+        
+        if (fault_rip > UPPER_HALF_START) {
+            panic("Fault in upper half\n");
+        }
+
         make_zombie(current_task_ts, 128 + 4); // 4 is SIGILL
         task_yield();
     } else if (interrupt_number == 14) {

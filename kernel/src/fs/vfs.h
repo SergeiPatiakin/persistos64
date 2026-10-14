@@ -92,7 +92,6 @@ struct dentry {
 };
 
 extern struct inode vfs_root_inode;
-extern struct inode *vfs_dev_dir_inode;
 
 struct vfs_lookup_result {
     uint8_t status;
@@ -155,5 +154,6 @@ ssize_t vfs_write(struct file *filp, void *buffer, size_t length);
 ssize_t vfs_ftruncate(struct file *filp, size_t size);
 struct file *filp_find(struct task_struct *process, uint32_t fd);
 struct file *filp_insert_point_find(struct task_struct *process, uint32_t fd);
+ssize_t vfs_switch_root(struct dentry *new_root_dentry);
 
 #endif

@@ -68,9 +68,9 @@ truncate td/truncate_basic.out
 diff td/touch_basic.out test/truncate_basic.out.exp
 
 echo test_sysfs_smoke
-cat /sys/pci > /dev/zero
-cat /sys/memory > /dev/zero
-cat /sys/nvme > /dev/zero
+cat /sys/pci > /sys/dev/zero
+cat /sys/memory > /sys/dev/zero
+cat /sys/nvme > /sys/dev/zero
 
 echo test_dd_basic
 dd if=test/dd_basic.txt of=td/dd_basic.out bs=2 skip=3 count=4 seek=5

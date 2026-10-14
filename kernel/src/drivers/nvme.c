@@ -5,6 +5,7 @@
 #include "drivers/tty.h"
 #include "drivers/nvmepart.h"
 #include "fs/vfs.h"
+#include "fs/sysfs.h"
 #include "lib/cstd.h"
 #include "lib/sync.h"
 #include "kernel/scheduler.h"
@@ -100,7 +101,7 @@ void nvme_probe_1(struct pci_device *pci_device) {
     strcpy(name_buffer, u8p("nvmeX"));
     name_buffer[4] = '0' + device_number; // TODO: proper name logic for >9 devices
     vfs_mknod(
-        vfs_dev_dir_inode,
+        &sysfs_dev_inode,
         name_buffer,
         DEVICE_NVME,
         device_number,

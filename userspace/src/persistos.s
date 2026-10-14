@@ -207,3 +207,12 @@ umount:
     movq $23, %rdi
     int $0x80
     retq
+
+.global switch_root
+switch_root:
+    movq %rdx, %rcx
+    movq %rsi, %rdx
+    movq %rdi, %rsi
+    movq $24, %rdi
+    int $0x80
+    retq

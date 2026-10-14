@@ -3,6 +3,7 @@
 #include "arch/asm.h"
 #include "drivers/tty.h"
 #include "drivers/device-numbers.h"
+#include "fs/sysfs.h"
 #include "kernel/scheduler.h"
 
 struct serial_device serial0 = {.device_number = 0};
@@ -30,7 +31,7 @@ int serial_init() {
     printk("Serial %s!\n", "works");
     serial0.device_number = 1;
     vfs_mknod(
-        vfs_dev_dir_inode,
+        &sysfs_dev_inode,
         u8p("serial0"),
         DEVICE_SERIAL,
         serial0.device_number,

@@ -11,9 +11,8 @@ struct slab_allocator inode_allocator = SLAB_OF(struct inode);
 struct slab_allocator dentry_allocator = SLAB_OF(struct dentry);
 struct slab_allocator file_allocator = SLAB_OF(struct file);
 
-struct dentry vfs_root_dentry;
+struct dentry *vfs_root_dentry;
 struct inode vfs_root_inode;
-struct inode *vfs_dev_dir_inode;
 struct superblock vfs_root_superblock;
 struct ramfs_superblock ramfs_root_superblock;
 
@@ -21,6 +20,8 @@ void vfs_init() {
     slab_allocator_init(&inode_allocator);
     slab_allocator_init(&dentry_allocator);
     slab_allocator_init(&file_allocator);
+
+    vfs_root_dentry = dentry_alloc();
 
     vfs_root_inode.type = INODE_DIRECTORY;
     init_list(&vfs_root_inode.dentry_lh); // Empty list of dentries
@@ -31,12 +32,10 @@ void vfs_init() {
     vfs_root_superblock.ops = &ramfs_superblock_ops;
     vfs_root_inode.superblock = &vfs_root_superblock;
 
-    vfs_root_dentry.inode = &vfs_root_inode;
-    vfs_root_dentry.mounted_inode = NULL;
-    strcpy(vfs_root_dentry.name, u8p("root_dummy"));
-    init_list(&vfs_root_dentry.dentry_le);
-
-    vfs_dev_dir_inode = vfs_mkdir(&vfs_root_inode, u8p("dev"));
+    vfs_root_dentry->inode = &vfs_root_inode;
+    vfs_root_dentry->mounted_inode = NULL;
+    strcpy(&vfs_root_dentry->name, u8p("root_dummy"));
+    init_list(&vfs_root_dentry->dentry_le);
 }
 
 // Create file inode
@@ -89,8 +88,8 @@ struct inode *vfs_mknod(
 void vfs_resolve(uint8_t *path, struct vfs_lookup_result *lookup_result) {
     uint8_t *buf = path;
     while(*buf == '/') buf++;
-    struct inode *inode = vfs_root_dentry.mounted_inode ? vfs_root_dentry.mounted_inode : vfs_root_dentry.inode;
-    struct dentry *cur_dentry = &vfs_root_dentry;
+    struct inode *inode = vfs_root_dentry->mounted_inode ? vfs_root_dentry->mounted_inode : vfs_root_dentry->inode;
+    struct dentry *cur_dentry = vfs_root_dentry;
     struct inode *parent_inode = inode;
     while (*buf != 0) {
         // At this point, we are trying to traverse into inode.
@@ -244,4 +243,9 @@ struct file *filp_insert_point_find(struct task_struct *process, uint32_t fd) {
         }
     }
     return NULL;
+}
+
+ssize_t vfs_switch_root(struct dentry *new_root_dentry) {
+    vfs_root_dentry = new_root_dentry;
+    return 0;
 }

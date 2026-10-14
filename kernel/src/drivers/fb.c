@@ -1,6 +1,7 @@
 // Driver for the framebuffer device
 #include <stdint.h>
 #include "fs/vfs.h"
+#include "fs/sysfs.h"
 #include "drivers/device-numbers.h"
 #include "kernel/limine-requests.h"
 #include "include/persistos-headers.h"
@@ -14,7 +15,7 @@ void fb_init() {
     framebuffer = framebuffer_request.response->framebuffers[0];
     framebuffer_length = framebuffer->pitch * framebuffer->height * framebuffer->bpp;
     vfs_mknod(
-        vfs_dev_dir_inode,
+        &sysfs_dev_inode,
         u8p("fb0"),
         DEVICE_FRAMEBUFFER,
         1,

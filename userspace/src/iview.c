@@ -124,7 +124,7 @@ int main(int argc, uint8_t* argv[]) {
         fputs(u8p("iview: unexpected argument\n"), stderr);
         exit(1);
     }
-    fb_fd = open(u8p("/dev/fb0"), 0);
+    fb_fd = open(u8p("sys/dev/fb0"), 0);
     if (is_error(fb_fd)) {
         fputs(u8p("iview: error opening framebuffer\n"), stderr);
         exit(1);

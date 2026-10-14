@@ -7,6 +7,7 @@
 #include "drivers/fbcon.h"
 #include "drivers/tty.h"
 #include "fs/vfs.h"
+#include "fs/sysfs.h"
 #include "lib/limine.h"
 #include "lib/sync.h"
 #include "lib/cstd.h"
@@ -71,7 +72,7 @@ void terminal_init_1() {
 
 void terminal_init_2() {
     tty1_inode = vfs_mknod(
-        vfs_dev_dir_inode,
+        &sysfs_dev_inode,
         u8p("tty1"),
         DEVICE_TTY,
         tty1.device_number,
@@ -79,7 +80,7 @@ void terminal_init_2() {
         &tty1
     );
     tty2_inode = vfs_mknod(
-        vfs_dev_dir_inode,
+        &sysfs_dev_inode,
         u8p("tty2"),
         DEVICE_TTY,
         tty2.device_number,
@@ -87,7 +88,7 @@ void terminal_init_2() {
         &tty2
     );
     tty3_inode = vfs_mknod(
-        vfs_dev_dir_inode,
+        &sysfs_dev_inode,
         u8p("tty3"),
         DEVICE_TTY,
         tty3.device_number,
@@ -95,7 +96,7 @@ void terminal_init_2() {
         &tty3
     );
     tty4_inode = vfs_mknod(
-        vfs_dev_dir_inode,
+        &sysfs_dev_inode,
         u8p("tty4"),
         DEVICE_TTY,
         tty4.device_number,
